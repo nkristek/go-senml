@@ -31,7 +31,7 @@ if err != nil {
 }
 
 // encode a new message
-encodedMessage, err := senml.EncodeToBytes(message, senml.JSON)
+encodedMessage, err := message.EncodeToBytes(senml.JSON)
 if err != nil {
 	// process error
 }
