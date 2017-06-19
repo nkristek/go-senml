@@ -1,14 +1,10 @@
-/*
-	author: Niclas Kristek
-	github.com/nkristek
-*/
 package senml
 
 type SenMLMessage struct {
 	/*
-		for xml parsing
+		Used for XML parsing
 	*/
-	XMLName *bool  `json:"_,omitempty" xml:"sensml"`
+	XmlName *bool  `json:"_,omitempty" xml:"sensml"`
 	Xmlns   string `json:"_,omitempty" xml:"xmlns,attr"`
 
 	/*
@@ -19,9 +15,9 @@ type SenMLMessage struct {
 
 type SenMLRecord struct {
 	/*
-		for xml parsing
+		Used for XML parsing
 	*/
-	XMLName *bool `json:"_,omitempty" xml:"senml"`
+	XmlName *bool `json:"_,omitempty" xml:"senml"`
 
 	/*
 		This is a string that is prepended to the names found in the entries.
@@ -110,7 +106,7 @@ type SenMLRecord struct {
 	UpdateTime *float64 `json:"ut,omitempty" xml:"ut,attr,omitempty"`
 
 	/*
-
-	 */
+		Additional information about a SenML Record
+	*/
 	Link *string `json:"l,omitempty" xml:"l,attr,omitempty"`
 }

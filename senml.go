@@ -1,12 +1,7 @@
 /*
-	author: Niclas Kristek
-	github.com/nkristek
-*/
-package senml
-
-/*
 	This implements 'draft-ietf-core-senml-08' (https://tools.ietf.org/html/draft-ietf-core-senml-08)
 */
+package senml
 
 import (
 	"encoding/json" // json formatting
@@ -15,6 +10,7 @@ import (
 	"time"          // get current time
 )
 
+// Supported encoding formats
 type Encoding int
 
 const (
@@ -22,7 +18,14 @@ const (
 	XML
 )
 
+// Parse the []byte with the given encoding format.
+// It returns a non-resolved message, when it succeeds,
+// you need to resolve it using the Resolve function to get
+// base attributes resolution, absolute time, etc.
 func ParseBytes(payload []byte, format Encoding) (message SenMLMessage, err error) {
+	message.XmlName = nil
+	message.Xmlns = "urn:ietf:params:xml:ns:senml"
+
 	switch {
 	case format == JSON:
 		err = json.Unmarshal(payload, &message.Records)
@@ -32,8 +35,9 @@ func ParseBytes(payload []byte, format Encoding) (message SenMLMessage, err erro
 	return
 }
 
-// populates the base attributes in the regular attributes and deletes the base attributes in the process
-// also deletes records with no value and sum (following the guidelines of the rfc)
+// Resolves the base attributes and deletes the base attributes afterwards
+// and calculates absolute time from relative time.
+// Also deletes records with no value or sum.
 func Resolve(message SenMLMessage) (resolvedMessage SenMLMessage, err error) {
 	/*
 		Direct quote from the draft:
@@ -54,6 +58,9 @@ func Resolve(message SenMLMessage) (resolvedMessage SenMLMessage, err error) {
 	var basevalue float64 = 0
 	var basesum float64 = 0
 	var baseversion int = 5 // current version in the draft
+
+	resolvedMessage.XmlName = message.XmlName
+	resolvedMessage.Xmlns = message.Xmlns
 
 	for _, record := range message.Records {
 		// get base attributes from current record

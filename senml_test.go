@@ -1,6 +1,7 @@
 /*
-  author: Niclas Kristek
-  github.com/nkristek
+	Unit tests, run:
+	`go test`
+	to execute them.
 */
 package senml
 
