@@ -18,7 +18,7 @@ import(
 
 ## Use
 ```go
-// parse the encoding format
+// parse using the encoding format
 message, err := senml.ParseBytes(payload, senml.JSON)
 if err != nil {
 	// process error
@@ -29,5 +29,13 @@ resolvedMessage, err := senml.Resolve(message)
 if err != nil {
 	// process error
 }
+
+// encode a new message
+encodedMessage, err := senml.EncodeToBytes(message, senml.JSON)
+if err != nil {
+	// process error
+}
 ```
+
+For further documentation, visit http://godoc.org/github.com/nkristek/go-senml
 
