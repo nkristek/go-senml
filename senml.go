@@ -22,16 +22,34 @@ const (
 // It returns a non-resolved message, when it succeeds,
 // you need to resolve it using the Resolve function to get
 // base attributes resolution, absolute time, etc.
-func ParseBytes(payload []byte, format Encoding) (message SenMLMessage, err error) {
+func ParseBytes(encodedMessage []byte, format Encoding) (message SenMLMessage, err error) {
 	message.XmlName = nil
 	message.Xmlns = "urn:ietf:params:xml:ns:senml"
 
 	switch {
 	case format == JSON:
-		err = json.Unmarshal(payload, &message.Records)
+		err = json.Unmarshal(encodedMessage, &message.Records)
 	case format == XML:
-		err = xml.Unmarshal(payload, &message)
+		err = xml.Unmarshal(encodedMessage, &message)
 	}
+
+	return
+}
+
+// Encodes the message with the given encoding format.
+// Please try to use base attributes as often as possible
+// to make sure that the encoded data is as small as possible.
+// (Basically a non-resolved message.)
+func EncodeToBytes(message SenMLMessage, format Encoding) (encodedMessage []byte, err error) {
+	message.Xmlns = "urn:ietf:params:xml:ns:senml"
+
+	switch {
+	case format == JSON:
+		encodedMessage, err = json.Marshal(message.Records)
+	case format == XML:
+		encodedMessage, err = xml.Marshal(message)
+	}
+
 	return
 }
 

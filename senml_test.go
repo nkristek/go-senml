@@ -24,13 +24,25 @@ func TestJSONParsing(t *testing.T) {
 
 	message, err := ParseBytes([]byte(testData), JSON)
 	if err != nil {
-		t.Fatalf("parsing JSON failed: ", err)
+		t.Fatalf("parsing initial JSON failed: ", err)
 		return
 	}
 
-	_, err = Resolve(message)
+	resolvedMessage, err := Resolve(message)
 	if err != nil {
-		t.Fatalf("resolving JSON failed: ", err)
+		t.Fatalf("resolving message failed: ", err)
+		return
+	}
+
+	_, err = EncodeToBytes(message, JSON)
+	if err != nil {
+		t.Fatalf("encoding message to JSON failed: ", err)
+		return
+	}
+
+	_, err = EncodeToBytes(resolvedMessage, JSON)
+	if err != nil {
+		t.Fatalf("encoding resolved message to JSON failed: ", err)
 		return
 	}
 }
@@ -49,13 +61,25 @@ func TestXMLParsing(t *testing.T) {
 
 	message, err := ParseBytes([]byte(testData), XML)
 	if err != nil {
-		t.Fatalf("parsing XML failed: ", err)
+		t.Fatalf("parsing intial XML failed: ", err)
 		return
 	}
 
-	_, err = Resolve(message)
+	resolvedMessage, err := Resolve(message)
 	if err != nil {
-		t.Fatalf("resolving XML failed: ", err)
+		t.Fatalf("resolving message failed: ", err)
+		return
+	}
+
+	_, err = EncodeToBytes(message, XML)
+	if err != nil {
+		t.Fatalf("encoding message to XML failed: ", err)
+		return
+	}
+
+	_, err = EncodeToBytes(resolvedMessage, XML)
+	if err != nil {
+		t.Fatalf("encoding resolved message to XML failed: ", err)
 		return
 	}
 }
