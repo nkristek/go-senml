@@ -34,13 +34,13 @@ func TestJSONParsing(t *testing.T) {
 		return
 	}
 
-	_, err = EncodeToBytes(message, JSON)
+	_, err = message.EncodeToBytes(JSON)
 	if err != nil {
 		t.Fatalf("encoding message to JSON failed: ", err)
 		return
 	}
 
-	_, err = EncodeToBytes(resolvedMessage, JSON)
+	_, err = resolvedMessage.EncodeToBytes(JSON)
 	if err != nil {
 		t.Fatalf("encoding resolved message to JSON failed: ", err)
 		return
@@ -71,13 +71,13 @@ func TestXMLParsing(t *testing.T) {
 		return
 	}
 
-	_, err = EncodeToBytes(message, XML)
+	_, err = message.EncodeToBytes(XML)
 	if err != nil {
 		t.Fatalf("encoding message to XML failed: ", err)
 		return
 	}
 
-	_, err = EncodeToBytes(resolvedMessage, XML)
+	_, err = resolvedMessage.EncodeToBytes(XML)
 	if err != nil {
 		t.Fatalf("encoding resolved message to XML failed: ", err)
 		return

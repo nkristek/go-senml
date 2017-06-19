@@ -40,7 +40,7 @@ func ParseBytes(encodedMessage []byte, format Encoding) (message SenMLMessage, e
 // Please try to use base attributes as often as possible
 // to make sure that the encoded data is as small as possible.
 // (Basically a non-resolved message.)
-func EncodeToBytes(message SenMLMessage, format Encoding) (encodedMessage []byte, err error) {
+func (message SenMLMessage) EncodeToBytes(format Encoding) (encodedMessage []byte, err error) {
 	message.Xmlns = "urn:ietf:params:xml:ns:senml"
 
 	switch {
