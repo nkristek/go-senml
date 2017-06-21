@@ -10,11 +10,14 @@ import (
 	"time"          // get current time
 )
 
+// current supported version
+const SenMLVersion int = 5
+
 // Supported encoding formats
-type Encoding int
+type EncodingFormat int
 
 const (
-	JSON Encoding = iota
+	JSON EncodingFormat = iota
 	XML
 )
 
@@ -22,7 +25,7 @@ const (
 // It returns a non-resolved message, when it succeeds,
 // you need to resolve it using the Resolve function to get
 // base attributes resolution, absolute time, etc.
-func ParseBytes(encodedMessage []byte, format Encoding) (message SenMLMessage, err error) {
+func Decode(encodedMessage []byte, format EncodingFormat) (message SenMLMessage, err error) {
 	message.XmlName = nil
 	message.Xmlns = "urn:ietf:params:xml:ns:senml"
 
@@ -40,7 +43,7 @@ func ParseBytes(encodedMessage []byte, format Encoding) (message SenMLMessage, e
 // Please try to use base attributes as often as possible
 // to make sure that the encoded data is as small as possible.
 // (Basically a non-resolved message.)
-func (message SenMLMessage) EncodeToBytes(format Encoding) (encodedMessage []byte, err error) {
+func (message SenMLMessage) Encode(format EncodingFormat) (encodedMessage []byte, err error) {
 	message.Xmlns = "urn:ietf:params:xml:ns:senml"
 
 	switch {
@@ -56,7 +59,7 @@ func (message SenMLMessage) EncodeToBytes(format Encoding) (encodedMessage []byt
 // Resolves the base attributes and deletes the base attributes afterwards
 // and calculates absolute time from relative time.
 // Also deletes records with no value or sum.
-func Resolve(message SenMLMessage) (resolvedMessage SenMLMessage, err error) {
+func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) {
 	/*
 		Direct quote from the draft:
 		Each SenML Pack carries a single array that represents a set of
@@ -75,7 +78,6 @@ func Resolve(message SenMLMessage) (resolvedMessage SenMLMessage, err error) {
 	var baseunit string = ""
 	var basevalue float64 = 0
 	var basesum float64 = 0
-	var baseversion int = 5 // current version in the draft
 
 	resolvedMessage.XmlName = message.XmlName
 	resolvedMessage.Xmlns = message.Xmlns
@@ -97,7 +99,7 @@ func Resolve(message SenMLMessage) (resolvedMessage SenMLMessage, err error) {
 		if record.BaseSum != nil && *record.BaseSum > 0 {
 			basesum = *record.BaseSum
 		}
-		if record.Version != nil && *record.Version > baseversion {
+		if record.Version != nil && *record.Version > SenMLVersion {
 			err = errors.New("version number is higher than supported")
 			return
 		}

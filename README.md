@@ -16,22 +16,22 @@ import(
 )
 ```
 
-## Use
+## Usage
 ```go
 // parse using the encoding format
-message, err := senml.ParseBytes(payload, senml.JSON)
+message, err := senml.Decode(payload, senml.JSON)
 if err != nil {
 	// process error
 }
 
 // resolve the message (resolve base attributes, convert relative to absolute time etc.)
-resolvedMessage, err := senml.Resolve(message)
+resolvedMessage, err := message.Resolve()
 if err != nil {
 	// process error
 }
 
 // encode a new message
-encodedMessage, err := message.EncodeToBytes(senml.JSON)
+encodedMessage, err := message.Encode(senml.JSON)
 if err != nil {
 	// process error
 }

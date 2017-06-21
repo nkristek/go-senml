@@ -22,25 +22,25 @@ func TestJSONParsing(t *testing.T) {
      {"n":"current","v":1.7}
    ]`
 
-	message, err := ParseBytes([]byte(testData), JSON)
+	message, err := Decode([]byte(testData), JSON)
 	if err != nil {
 		t.Fatalf("parsing initial JSON failed: ", err)
 		return
 	}
 
-	resolvedMessage, err := Resolve(message)
+	resolvedMessage, err := message.Resolve()
 	if err != nil {
 		t.Fatalf("resolving message failed: ", err)
 		return
 	}
 
-	_, err = message.EncodeToBytes(JSON)
+	_, err = message.Encode(JSON)
 	if err != nil {
 		t.Fatalf("encoding message to JSON failed: ", err)
 		return
 	}
 
-	_, err = resolvedMessage.EncodeToBytes(JSON)
+	_, err = resolvedMessage.Encode(JSON)
 	if err != nil {
 		t.Fatalf("encoding resolved message to JSON failed: ", err)
 		return
@@ -59,25 +59,25 @@ func TestXMLParsing(t *testing.T) {
      <senml n="current" v="1.7"></senml>
    </sensml>`
 
-	message, err := ParseBytes([]byte(testData), XML)
+	message, err := Decode([]byte(testData), XML)
 	if err != nil {
 		t.Fatalf("parsing intial XML failed: ", err)
 		return
 	}
 
-	resolvedMessage, err := Resolve(message)
+	resolvedMessage, err := message.Resolve()
 	if err != nil {
 		t.Fatalf("resolving message failed: ", err)
 		return
 	}
 
-	_, err = message.EncodeToBytes(XML)
+	_, err = message.Encode(XML)
 	if err != nil {
 		t.Fatalf("encoding message to XML failed: ", err)
 		return
 	}
 
-	_, err = resolvedMessage.EncodeToBytes(XML)
+	_, err = resolvedMessage.Encode(XML)
 	if err != nil {
 		t.Fatalf("encoding resolved message to XML failed: ", err)
 		return
