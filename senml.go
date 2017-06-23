@@ -78,6 +78,7 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 	var baseunit string = ""
 	var basevalue float64 = 0
 	var basesum float64 = 0
+	var baseversion int = SenMLVersion
 
 	resolvedMessage.XmlName = message.XmlName
 	resolvedMessage.Xmlns = message.Xmlns
@@ -99,7 +100,7 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 		if record.BaseSum != nil && *record.BaseSum > 0 {
 			basesum = *record.BaseSum
 		}
-		if record.Version != nil && *record.Version > SenMLVersion {
+		if record.Version != nil && *record.Version > baseversion {
 			err = errors.New("version number is higher than supported")
 			return
 		}
