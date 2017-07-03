@@ -134,7 +134,7 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 		}
 		record.Time = &combinedTime
 		if *record.Time <= 0 {
-			var now int64 = time.Now().UnixNano() / 1000000000.0
+			var now int64 = time.Now().Unix()
 			absoluteTime := float64(now) + *record.Time
 			record.Time = &absoluteTime
 		}
