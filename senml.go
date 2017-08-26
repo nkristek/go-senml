@@ -84,6 +84,11 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 	resolvedMessage.Xmlns = message.Xmlns
 
 	for _, record := range message.Records {
+		if record.Version != nil && *record.Version > baseversion {
+			err = errors.New("version number is higher than supported")
+			return
+		}
+
 		// get base attributes from current record
 		if record.BaseName != nil && len(*record.BaseName) > 0 {
 			basename = *record.BaseName
@@ -100,10 +105,6 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 		if record.BaseSum != nil && *record.BaseSum > 0 {
 			basesum = *record.BaseSum
 		}
-		if record.Version != nil && *record.Version > baseversion {
-			err = errors.New("version number is higher than supported")
-			return
-		}
 
 		// delete base attributes from record
 		record.BaseName = nil
@@ -117,7 +118,9 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 		if record.Name != nil {
 			combinedName += *record.Name
 		}
-		record.Name = &combinedName
+		if len(combinedName) > 0 {
+			record.Name = &combinedName
+		}
 
 		// 2. add base time to every time field and convert time to absolute
 		/*
@@ -140,24 +143,28 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 		}
 
 		// 3. populate base unit on empty unit fields
-		if record.Unit == nil || len(*record.Unit) <= 0 {
+		if record.Unit == nil && len(*record.Unit) == 0 && len(baseunit) > 0 {
 			currentBaseUnit := baseunit
 			record.Unit = &currentBaseUnit
 		}
 
 		// 4. add base value to every value field
-		combinedValue := basevalue
-		if record.Value != nil {
-			combinedValue += *record.Value
+		if basevalue > 0 {
+			combinedValue := basevalue
+			if record.Value != nil {
+				combinedValue += *record.Value
+			}
+			record.Value = &combinedValue
 		}
-		record.Value = &combinedValue
 
 		// 5. add base sum to every sum field
-		combinedSum := basesum
-		if record.Sum != nil {
-			combinedSum += *record.Sum
+		if basesum > 0 {
+			combinedSum := basesum
+			if record.Sum != nil {
+				combinedSum += *record.Sum
+			}
+			record.Sum = &combinedSum
 		}
-		record.Sum = &combinedSum
 
 		// 6. set version to baseversion
 		record.Version = &baseversion
