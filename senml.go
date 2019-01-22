@@ -1,17 +1,19 @@
 /*
-	This implements 'draft-ietf-core-senml-08' (https://tools.ietf.org/html/draft-ietf-core-senml-08)
+	This implements 'RFC8428' (https://tools.ietf.org/rfc/rfc8428.txt)
 */
 package senml
 
 import (
-	"encoding/json" // json formatting
-	"encoding/xml"  // xml formatting
-	"errors"        // throw error when processing failed
-	"time"          // get current time
+	"encoding/json"
+	"encoding/xml"
+	"errors"
+	"fmt"
+	"regexp"
+	"time"
 )
 
 // current supported version
-const SenMLVersion int = 5
+const SenMLVersion int = 10
 
 // Supported encoding formats
 type EncodingFormat int
@@ -58,122 +60,157 @@ func (message SenMLMessage) Encode(format EncodingFormat) (encodedMessage []byte
 
 // Resolves the base attributes and deletes the base attributes afterwards
 // and calculates absolute time from relative time.
-// Also deletes records with no value or sum.
 func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) {
-	/*
-		Direct quote from the draft:
-		Each SenML Pack carries a single array that represents a set of
-		measurements and/or parameters.  This array contains a series of
-		SenML Records with several attributes described below.  There are two
-		kind of attributes: base and regular.  The base attributes can be
-		included in the any SenML Record and they apply to the entries in the
-		Record.  Each base attribute also applies to all Records after it up
-		to, but not including, the next Record that has that same base
-		attribute.  All base attributes are optional.  Regular attributes can
-		be included in any SenML Record and apply only to that Record.
-	*/
+	var timeNow float64 = float64(time.Now().Unix())
 
-	var basename string = ""
-	var basetime float64 = 0
-	var baseunit string = ""
-	var basevalue float64 = 0
-	var basesum float64 = 0
-	var baseversion int = SenMLVersion
+	var basename *string = nil
+	var basetime *float64 = nil
+	var baseunit *string = nil
+	var basevalue *float64 = nil
+	var basesum *float64 = nil
+	var baseversion *int = nil
 
 	resolvedMessage.XmlName = message.XmlName
 	resolvedMessage.Xmlns = message.Xmlns
 
 	for _, record := range message.Records {
-		if record.Version != nil && *record.Version > baseversion {
-			err = errors.New("version number is higher than supported")
+
+		// Base attributes
+
+		if record.BaseVersion != nil {
+			if *record.BaseVersion > SenMLVersion {
+				err = errors.New(fmt.Sprintf("The version of the record is higher than supported. (expected: %v, got: %v)", SenMLVersion, *record.BaseVersion))
+				return
+			} else if baseversion == nil {
+				baseversion = record.BaseVersion
+			} else if *record.BaseVersion != *baseversion {
+				err = errors.New("The version of the records should all be the same.")
+				return
+			}
+		}
+
+		if record.BaseName != nil {
+			basename = record.BaseName
+		}
+		if record.BaseTime != nil {
+			basetime = record.BaseTime
+		}
+		if record.BaseUnit != nil {
+			baseunit = record.BaseUnit
+		}
+		if record.BaseValue != nil {
+			basevalue = record.BaseValue
+		}
+		if record.BaseSum != nil {
+			basesum = record.BaseSum
+		}
+
+		// Name
+
+		var resolvedName string = ""
+		if basename != nil {
+			resolvedName = *basename
+		}
+		if record.Name != nil {
+			resolvedName += *record.Name
+		}
+
+		if len(resolvedName) == 0 {
+			err = errors.New("The concatenated name MUST not be empty to uniquely identify and differentiate the sensor from all others.")
 			return
 		}
 
-		// get base attributes from current record
-		if record.BaseName != nil && len(*record.BaseName) > 0 {
-			basename = *record.BaseName
+		validNameCharsExp := regexp.MustCompile(`^[a-zA-Z0-9\-\:\.\/\_]*$`)
+		if !validNameCharsExp.MatchString(resolvedName) {
+			err = errors.New("The concatenated name MUST consist only of characters out of the set \"A\" to \"Z\", \"a\" to \"z\", and \"0\" to \"9\", as well as \"-\", \":\", \".\", \"/\", and \"_\".")
+			return
 		}
-		if record.BaseTime != nil && *record.BaseTime > 0 {
-			basetime = *record.BaseTime
-		}
-		if record.BaseUnit != nil && len(*record.BaseUnit) > 0 {
-			baseunit = *record.BaseUnit
-		}
-		if record.BaseValue != nil && *record.BaseValue > 0 {
-			basevalue = *record.BaseValue
-		}
-		if record.BaseSum != nil && *record.BaseSum > 0 {
-			basesum = *record.BaseSum
+		validFirstCharacterExp := regexp.MustCompile(`^[a-zA-Z0-9]*$`)
+		if !validFirstCharacterExp.MatchString(resolvedName[:1]) {
+			err = errors.New("The concatenated name MUST start with a character out of the set \"A\" to \"Z\", \"a\" to \"z\", or \"0\" to \"9\".")
+			return
 		}
 
-		// delete base attributes from record
+		record.Name = &resolvedName
+
+		// Time
+
+		var resolvedTime float64 = 0
+		if basetime != nil {
+			resolvedTime = *basetime
+		}
+		if record.Time != nil {
+			resolvedTime += *record.Time
+		}
+
+		if resolvedTime < 2^28 {
+			var absoluteTime float64 = resolvedTime + timeNow
+			record.Time = &absoluteTime
+		} else {
+			record.Time = &resolvedTime
+		}
+
+		// Unit
+
+		if record.Unit == nil && baseunit != nil {
+			var unit = *baseunit
+			record.Unit = &unit
+		}
+
+		// Value
+
+		var resolvedValue float64 = 0
+		if basevalue != nil {
+			resolvedValue = *basevalue
+		}
+		if record.Value != nil {
+			resolvedValue += *record.Value
+		}
+		if basevalue != nil || record.Value != nil {
+			record.Value = &resolvedValue
+		}
+
+		// Sum
+
+		var resolvedSum float64 = 0
+		if basesum != nil {
+			resolvedSum = *basesum
+		}
+		if record.Sum != nil {
+			resolvedSum += *record.Sum
+		}
+		if basesum != nil || record.Sum != nil {
+			record.Sum = &resolvedSum
+		}
+
+		// Check if a value or sum is set
+
+		if record.Value == nil && record.StringValue == nil && record.BoolValue == nil && record.DataValue == nil && record.Sum == nil {
+			err = errors.New("The record has no Value, StringValue, BoolValue, DataValue or Sum.")
+			return
+		}
+
+		resolvedMessage.Records = append(resolvedMessage.Records, record)
+	}
+
+	// Clear base attributes
+
+	for _, record := range message.Records {
 		record.BaseName = nil
 		record.BaseTime = nil
 		record.BaseUnit = nil
 		record.BaseValue = nil
 		record.BaseSum = nil
 
-		// 1. prepend the basename
-		combinedName := basename
-		if record.Name != nil {
-			combinedName += *record.Name
-		}
-		if len(combinedName) > 0 {
-			record.Name = &combinedName
-		}
-
-		// 2. add base time to every time field and convert time to absolute
-		/*
-			Direct quote from the draft:
-			A time of zero indicates that the sensor does not know the absolute
-			time and the measurement was made roughly "now".  A negative value is
-			used to indicate seconds in the past from roughly "now".  A positive
-			value is used to indicate the number of seconds, excluding leap
-			seconds, since the start of the year 1970 in UTC.
-		*/
-		combinedTime := basetime
-		if record.Time != nil {
-			combinedTime += *record.Time
-		}
-		record.Time = &combinedTime
-		if *record.Time <= 0 {
-			var now int64 = time.Now().Unix()
-			absoluteTime := float64(now) + *record.Time
-			record.Time = &absoluteTime
-		}
-
-		// 3. populate base unit on empty unit fields
-		if (record.Unit == nil || len(*record.Unit) == 0) && len(baseunit) > 0 {
-			currentBaseUnit := baseunit
-			record.Unit = &currentBaseUnit
-		}
-
-		// 4. add base value to every value field
-		if basevalue > 0 {
-			combinedValue := basevalue
-			if record.Value != nil {
-				combinedValue += *record.Value
-			}
-			record.Value = &combinedValue
-		}
-
-		// 5. add base sum to every sum field
-		if basesum > 0 {
-			combinedSum := basesum
-			if record.Sum != nil {
-				combinedSum += *record.Sum
-			}
-			record.Sum = &combinedSum
-		}
-
-		// 6. set version to baseversion
-		record.Version = &baseversion
-
-		// add the record to the output message if a value is set
-		if record.Value != nil || record.StringValue != nil || record.BoolValue != nil || record.DataValue != nil || record.Sum != nil {
-			resolvedMessage.Records = append(resolvedMessage.Records, record)
+		if baseversion != nil && *baseversion != SenMLVersion {
+			version := *baseversion
+			record.BaseVersion = &version
+		} else {
+			record.BaseVersion = nil
 		}
 	}
+
+	// TODO: sort the records to be in chronological order
 
 	return
 }

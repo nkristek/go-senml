@@ -4,9 +4,9 @@
 [![Build Status](https://travis-ci.com/nkristek/go-senml.svg?branch=master)](https://travis-ci.com/nkristek/go-senml)
 [![Coverage Status](https://coveralls.io/repos/github/nkristek/go-senml/badge.svg?branch=master)](https://coveralls.io/github/nkristek/go-senml?branch=master)
 
-A go library to parse SenML records. It currently supports only JSON and XML, but more formats like CBOR are planned.
+A go library to parse SenML records. It currently supports only JSON and XML, but other formats like CBOR and EXI are planned.
 
-This currently implements 'draft-ietf-core-senml-08' (https://tools.ietf.org/html/draft-ietf-core-senml-08)
+This library implements [RFC8428](https://tools.ietf.org/rfc/rfc8428.txt).
 
 ## Install
 ```sh
@@ -42,4 +42,3 @@ if err != nil {
 ```
 
 For further documentation, visit http://godoc.org/github.com/nkristek/go-senml
-

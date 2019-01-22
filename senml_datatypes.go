@@ -31,9 +31,9 @@ type SenMLRecord struct {
 
 	/*
 		A base unit that is assumed for all entries, unless
-		otherwise indicated.  If a record does not contain a Unit value,
-		then the Base Unit is used.  Otherwise the value found in the Unit
-		(if any) is used.
+		otherwise indicated. If a record does not contain a Unit value,
+		then the Base Unit is used. Otherwise, the value found in the
+		Unit (if any) is used.
 	*/
 	BaseUnit *string `json:"bu,omitempty" xml:"bu,attr,omitempty"`
 
@@ -48,65 +48,57 @@ type SenMLRecord struct {
 	BaseSum *float64 `json:"bs:omitempty" xml:"bs,attr,omitempty"`
 
 	/*
-		Version number of media type format.  This attribute is an
-		optional positive integer and defaults to 5 if not present.  [RFC
-		Editor: change the default value to 10 when this specification is
-		published as an RFC and remove this note]
+		Version number of the media type format. This field is an optional positive integer and defaults to 10 if not present.
 	*/
-	Version *int `json:"bver,omitempty" xml:"bver,attr,omitempty"`
+	BaseVersion *int `json:"bver,omitempty" xml:"bver,attr,omitempty"`
 
 	/*
-		Name of the sensor or parameter.
-		When appended to the Base Name attribute, this must result in a
-		globally unique identifier for the resource.  The name is optional,
-		if the Base Name is present.  If the name is missing, Base Name must
-		uniquely identify the resource.  This can be used to represent a large
-		array of measurements from the same sensor without having to repeat its
+		Name of the sensor or parameter. When appended to the Base
+		Name field, this must result in a globally unique identifier for
+		the resource. The name is optional, if the Base Name is present.
+		If the name is missing, the Base Name must uniquely identify the
+		resource. This can be used to represent a large array of
+		measurements from the same sensor without having to repeat its
 		identifier on every measurement.
 	*/
 	Name *string `json:"n,omitempty" xml:"n,attr,omitempty"`
 
 	/*
-		Units for a measurement value.  Optional.
+		Unit for a measurement value.  Optional.
 	*/
 	Unit *string `json:"u,omitempty" xml:"u,attr,omitempty"`
 
 	/*
-		Value of the entry.  Optional if a Sum value is present,
-		otherwise required.  Values are represented using basic data
-		types.  This specification defines floating point numbers ("v"
+		Value of the entry. Optional if a Sum value is present;
+		otherwise, it's required. Values are represented using basic data
+		types. This specification defines floating-point numbers ("v"
 		field for "Value"), booleans ("vb" for "Boolean Value"), strings
-		("vs" for "String Value") and binary data ("vd" for "Data Value").
-		Exactly one value field MUST appear unless there is Sum field in
-		which case it is allowed to have no Value field.
+		("vs" for "String Value"), and binary data ("vd" for "Data
+		Value"). Exactly one Value field MUST appear unless there is a
+		Sum field, in which case it is allowed to have no Value field.
 	*/
 	Value       *float64 `json:"v,omitempty" xml:"v,attr,omitempty"`
-	StringValue *string  `json:"vs,omitempty" xml:"vs,attr,omitempty"`
 	BoolValue   *bool    `json:"vb,omitempty" xml:"vb,attr,omitempty"`
+	StringValue *string  `json:"vs,omitempty" xml:"vs,attr,omitempty"`
 	DataValue   *string  `json:"vd,omitempty" xml:"vd,attr,omitempty"`
 
 	/*
-		Integrated sum of the values over time.  Optional.  This
-		attribute is in the units specified in the Unit value multiplied
-		by seconds.
+		Integrated sum of the values over time. Optional. This field
+		is in the unit specified in the Unit value multiplied by seconds.
+		For historical reasons, it is named "sum" instead of "integral".
 	*/
 	Sum *float64 `json:"s,omitempty" xml:"s,attr,omitempty"`
 
 	/*
-		Time when value was recorded.  Optional.
+		Time when the value was recorded. Optional.
 	*/
 	Time *float64 `json:"t,omitempty" xml:"t,attr,omitempty"`
 
 	/*
-	 	An optional time in seconds that represents the maximum
-	    time before this sensor will provide an updated reading for a
-	    measurement.  This can be used to detect the failure of sensors or
-	    communications path from the sensor.
+		 	Period of time in seconds that represents the maximum
+			time before this sensor will provide an updated reading for a
+			measurement.  Optional.  This can be used to detect the failure of
+			sensors or the communications path from the sensor.
 	*/
 	UpdateTime *float64 `json:"ut,omitempty" xml:"ut,attr,omitempty"`
-
-	/*
-		Additional information about a SenML Record
-	*/
-	Link *string `json:"l,omitempty" xml:"l,attr,omitempty"`
 }
