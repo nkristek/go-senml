@@ -3,9 +3,10 @@
 	`go test`
 	to execute them.
 */
-package senml
+package senml_test
 
 import (
+	"github.com/nkristek/go-senml"
 	"testing"
 )
 
@@ -22,27 +23,27 @@ func TestJSONParsing(t *testing.T) {
      {"n":"current","v":1.7}
    ]`
 
-	message, err := Decode([]byte(testData), JSON)
+	message, err := senml.Decode([]byte(testData), senml.JSON)
 	if err != nil {
-		t.Fatalf("parsing initial JSON failed: ", err)
+		t.Error("parsing initial JSON failed: ", err)
 		return
 	}
 
 	resolvedMessage, err := message.Resolve()
 	if err != nil {
-		t.Fatalf("resolving message failed: ", err)
+		t.Error("resolving message failed: ", err)
 		return
 	}
 
-	_, err = message.Encode(JSON)
+	_, err = message.Encode(senml.JSON)
 	if err != nil {
-		t.Fatalf("encoding message to JSON failed: ", err)
+		t.Error("encoding message to JSON failed: ", err)
 		return
 	}
 
-	_, err = resolvedMessage.Encode(JSON)
+	_, err = resolvedMessage.Encode(senml.JSON)
 	if err != nil {
-		t.Fatalf("encoding resolved message to JSON failed: ", err)
+		t.Error("encoding resolved message to JSON failed: ", err)
 		return
 	}
 }
@@ -59,27 +60,27 @@ func TestXMLParsing(t *testing.T) {
      <senml n="current" v="1.7"></senml>
    </sensml>`
 
-	message, err := Decode([]byte(testData), XML)
+	message, err := senml.Decode([]byte(testData), senml.XML)
 	if err != nil {
-		t.Fatalf("parsing intial XML failed: ", err)
+		t.Error("parsing intial XML failed: ", err)
 		return
 	}
 
 	resolvedMessage, err := message.Resolve()
 	if err != nil {
-		t.Fatalf("resolving message failed: ", err)
+		t.Error("resolving message failed: ", err)
 		return
 	}
 
-	_, err = message.Encode(XML)
+	_, err = message.Encode(senml.XML)
 	if err != nil {
-		t.Fatalf("encoding message to XML failed: ", err)
+		t.Error("encoding message to XML failed: ", err)
 		return
 	}
 
-	_, err = resolvedMessage.Encode(XML)
+	_, err = resolvedMessage.Encode(senml.XML)
 	if err != nil {
-		t.Fatalf("encoding resolved message to XML failed: ", err)
+		t.Error("encoding resolved message to XML failed: ", err)
 		return
 	}
 }
