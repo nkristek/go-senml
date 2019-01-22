@@ -143,7 +143,7 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 		}
 
 		// 3. populate base unit on empty unit fields
-		if record.Unit == nil && len(*record.Unit) == 0 && len(baseunit) > 0 {
+		if (record.Unit == nil || len(*record.Unit) == 0) && len(baseunit) > 0 {
 			currentBaseUnit := baseunit
 			record.Unit = &currentBaseUnit
 		}
