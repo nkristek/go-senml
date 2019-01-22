@@ -10,13 +10,13 @@ This library implements [RFC8428](https://tools.ietf.org/rfc/rfc8428.txt).
 
 ## Install
 ```sh
-go get github.com/nkristek/go-seml
+go get github.com/nkristek/go-senml
 ```
 
 ## Import
 ```go
 import(
-	"github.com/nkristek/go-seml"
+	"github.com/nkristek/go-senml"
 )
 ```
 
@@ -41,4 +41,4 @@ if err != nil {
 }
 ```
 
-For further documentation, visit http://godoc.org/github.com/nkristek/go-senml
+For further documentation, visit [GoDoc](http://godoc.org/github.com/nkristek/go-senml)
