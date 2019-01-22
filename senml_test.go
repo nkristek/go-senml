@@ -28,8 +28,8 @@ func TestJSONParsing(t *testing.T) {
 		{"u":"lat","t":180,"v":60.07967}
 	  ]`
 
-	// the same message but with already resolved fields
-	var resolvedData string = `[
+	// the same message but with already resolved fields, see https://tools.ietf.org/html/rfc8428#section-5.1.4
+	var resolvedTestData string = `[
 		{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067464e+09,
 		 "v":20},
 		{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067464e+09,
@@ -60,13 +60,13 @@ func TestJSONParsing(t *testing.T) {
 
 	// Decode
 
-	message, err := senml.Decode([]byte(testData), senml.JSON)
+	testDataMessage, err := senml.Decode([]byte(testData), senml.JSON)
 	if err != nil {
 		t.Error("parsing initial JSON failed: ", err)
 		return
 	}
 
-	resolvedDataMessage, err := senml.Decode([]byte(resolvedData), senml.JSON)
+	resolvedTestDataMessage, err := senml.Decode([]byte(resolvedTestData), senml.JSON)
 	if err != nil {
 		t.Error("parsing initial JSON failed: ", err)
 		return
@@ -74,7 +74,7 @@ func TestJSONParsing(t *testing.T) {
 
 	// Resolve
 
-	resolvedMessage, err := message.Resolve()
+	testDataMessageResolved, err := testDataMessage.Resolve()
 	if err != nil {
 		t.Error("resolving message failed: ", err)
 		return
@@ -82,99 +82,97 @@ func TestJSONParsing(t *testing.T) {
 
 	// Check Resolve
 
-	if len(resolvedMessage.Records) != len(resolvedDataMessage.Records) {
-		t.Error("Unequal amount of records")
-		return
-	}
-	for i := 0; i < len(resolvedMessage.Records); i++ {
-		record := resolvedMessage.Records[i]
-		recordResolved := resolvedDataMessage.Records[i]
-
-		if record.Name == nil && recordResolved.Name != nil || record.Name != nil && recordResolved.Name == nil {
-			t.Error("Name of resolved message is not set")
-			return
-		} else if record.Name != nil && recordResolved.Name != nil && *record.Name != *recordResolved.Name {
-			t.Error("Name of resolved message doesnt match")
-			return
-		}
-
-		if record.Unit == nil && recordResolved.Unit != nil || record.Unit != nil && recordResolved.Unit == nil {
-			t.Error("Unit of resolved message is not set")
-			return
-		} else if record.Unit != nil && recordResolved.Unit != nil && *record.Unit != *recordResolved.Unit {
-			t.Error("Unit of resolved message doesnt match")
-			return
-		}
-
-		if record.Value == nil && recordResolved.Value != nil || record.Value != nil && recordResolved.Value == nil {
-			t.Error("Value of resolved message is not set")
-			return
-		} else if record.Value != nil && recordResolved.Value != nil && *record.Value != *recordResolved.Value {
-			t.Error("Value of resolved message doesnt match")
-			return
-		}
-
-		if record.BoolValue == nil && recordResolved.BoolValue != nil || record.BoolValue != nil && recordResolved.BoolValue == nil {
-			t.Error("BoolValue of resolved message is not set")
-			return
-		} else if record.BoolValue != nil && recordResolved.BoolValue != nil && *record.BoolValue != *recordResolved.BoolValue {
-			t.Error("BoolValue of resolved message doesnt match")
-			return
-		}
-
-		if record.StringValue == nil && recordResolved.StringValue != nil || record.StringValue != nil && recordResolved.StringValue == nil {
-			t.Error("StringValue of resolved message is not set")
-			return
-		} else if record.StringValue != nil && recordResolved.StringValue != nil && *record.StringValue != *recordResolved.StringValue {
-			t.Error("StringValue of resolved message doesnt match")
-			return
-		}
-
-		if record.DataValue == nil && recordResolved.DataValue != nil || record.DataValue != nil && recordResolved.DataValue == nil {
-			t.Error("DataValue of resolved message is not set")
-			return
-		} else if record.DataValue != nil && recordResolved.DataValue != nil && *record.DataValue != *recordResolved.DataValue {
-			t.Error("DataValue of resolved message doesnt match")
-			return
-		}
-
-		if record.Sum == nil && recordResolved.Sum != nil || record.Sum != nil && recordResolved.Sum == nil {
-			t.Error("Sum of resolved message is not set")
-			return
-		} else if record.Sum != nil && recordResolved.Sum != nil && *record.Sum != *recordResolved.Sum {
-			t.Error("Sum of resolved message doesnt match")
-			return
-		}
-
-		if record.Time == nil && recordResolved.Time != nil || record.Time != nil && recordResolved.Time == nil {
-			t.Error("Time of resolved message is not set")
-			return
-		} else if record.Time != nil && recordResolved.Time != nil && *record.Time != *recordResolved.Time {
-			t.Error("Time of resolved message doesnt match")
-			return
-		}
-
-		if record.UpdateTime == nil && recordResolved.UpdateTime != nil || record.UpdateTime != nil && recordResolved.UpdateTime == nil {
-			t.Error("UpdateTime of resolved message is not set")
-			return
-		} else if record.UpdateTime != nil && recordResolved.UpdateTime != nil && *record.UpdateTime != *recordResolved.UpdateTime {
-			t.Error("UpdateTime of resolved message doesnt match")
-			return
-		}
-	}
+	compareMessages(t, testDataMessageResolved, resolvedTestDataMessage)
 
 	// Encode
 
-	_, err = message.Encode(senml.JSON)
+	_, err = testDataMessage.Encode(senml.JSON)
 	if err != nil {
 		t.Error("encoding message to JSON failed: ", err)
 		return
 	}
+}
 
-	_, err = resolvedMessage.Encode(senml.JSON)
-	if err != nil {
-		t.Error("encoding resolved message to JSON failed: ", err)
+func compareMessages(t *testing.T, firstMessage senml.SenMLMessage, secondMessage senml.SenMLMessage) {
+	if len(firstMessage.Records) != len(secondMessage.Records) {
+		t.Error("Unequal amount of records")
 		return
+	}
+	for i := 0; i < len(firstMessage.Records); i++ {
+		firstMessageRecord := firstMessage.Records[i]
+		secondMessageRecord := secondMessage.Records[i]
+
+		if firstMessageRecord.Name == nil && secondMessageRecord.Name != nil || firstMessageRecord.Name != nil && secondMessageRecord.Name == nil {
+			t.Error("Name of resolved message is not set")
+			return
+		} else if firstMessageRecord.Name != nil && secondMessageRecord.Name != nil && *firstMessageRecord.Name != *secondMessageRecord.Name {
+			t.Error("Name of resolved message doesnt match")
+			return
+		}
+
+		if firstMessageRecord.Unit == nil && secondMessageRecord.Unit != nil || firstMessageRecord.Unit != nil && secondMessageRecord.Unit == nil {
+			t.Error("Unit of resolved message is not set")
+			return
+		} else if firstMessageRecord.Unit != nil && secondMessageRecord.Unit != nil && *firstMessageRecord.Unit != *secondMessageRecord.Unit {
+			t.Error("Unit of resolved message doesnt match")
+			return
+		}
+
+		if firstMessageRecord.Value == nil && secondMessageRecord.Value != nil || firstMessageRecord.Value != nil && secondMessageRecord.Value == nil {
+			t.Error("Value of resolved message is not set")
+			return
+		} else if firstMessageRecord.Value != nil && secondMessageRecord.Value != nil && *firstMessageRecord.Value != *secondMessageRecord.Value {
+			t.Error("Value of resolved message doesnt match")
+			return
+		}
+
+		if firstMessageRecord.BoolValue == nil && secondMessageRecord.BoolValue != nil || firstMessageRecord.BoolValue != nil && secondMessageRecord.BoolValue == nil {
+			t.Error("BoolValue of resolved message is not set")
+			return
+		} else if firstMessageRecord.BoolValue != nil && secondMessageRecord.BoolValue != nil && *firstMessageRecord.BoolValue != *secondMessageRecord.BoolValue {
+			t.Error("BoolValue of resolved message doesnt match")
+			return
+		}
+
+		if firstMessageRecord.StringValue == nil && secondMessageRecord.StringValue != nil || firstMessageRecord.StringValue != nil && secondMessageRecord.StringValue == nil {
+			t.Error("StringValue of resolved message is not set")
+			return
+		} else if firstMessageRecord.StringValue != nil && secondMessageRecord.StringValue != nil && *firstMessageRecord.StringValue != *secondMessageRecord.StringValue {
+			t.Error("StringValue of resolved message doesnt match")
+			return
+		}
+
+		if firstMessageRecord.DataValue == nil && secondMessageRecord.DataValue != nil || firstMessageRecord.DataValue != nil && secondMessageRecord.DataValue == nil {
+			t.Error("DataValue of resolved message is not set")
+			return
+		} else if firstMessageRecord.DataValue != nil && secondMessageRecord.DataValue != nil && *firstMessageRecord.DataValue != *secondMessageRecord.DataValue {
+			t.Error("DataValue of resolved message doesnt match")
+			return
+		}
+
+		if firstMessageRecord.Sum == nil && secondMessageRecord.Sum != nil || firstMessageRecord.Sum != nil && secondMessageRecord.Sum == nil {
+			t.Error("Sum of resolved message is not set, first: ", firstMessageRecord.Sum, ", second: ", secondMessageRecord.Sum)
+			return
+		} else if firstMessageRecord.Sum != nil && secondMessageRecord.Sum != nil && *firstMessageRecord.Sum != *secondMessageRecord.Sum {
+			t.Error("Sum of resolved message doesnt match")
+			return
+		}
+
+		if firstMessageRecord.Time == nil && secondMessageRecord.Time != nil || firstMessageRecord.Time != nil && secondMessageRecord.Time == nil {
+			t.Error("Time of resolved message is not set")
+			return
+		} else if firstMessageRecord.Time != nil && secondMessageRecord.Time != nil && *firstMessageRecord.Time != *secondMessageRecord.Time {
+			t.Error("Time of resolved message doesnt match")
+			return
+		}
+
+		if firstMessageRecord.UpdateTime == nil && secondMessageRecord.UpdateTime != nil || firstMessageRecord.UpdateTime != nil && secondMessageRecord.UpdateTime == nil {
+			t.Error("UpdateTime of resolved message is not set")
+			return
+		} else if firstMessageRecord.UpdateTime != nil && secondMessageRecord.UpdateTime != nil && *firstMessageRecord.UpdateTime != *secondMessageRecord.UpdateTime {
+			t.Error("UpdateTime of resolved message doesnt match")
+			return
+		}
 	}
 }
 
