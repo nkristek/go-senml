@@ -1,11 +1,14 @@
 package senml
 
+import (
+	"encoding/xml"
+)
+
 type SenMLMessage struct {
 	/*
 		Used for XML parsing
 	*/
-	XmlName *bool  `json:"_,omitempty" xml:"sensml"`
-	Xmlns   string `json:"_,omitempty" xml:"xmlns,attr"`
+	XMLName xml.Name `json:"-" xml:"urn:ietf:params:xml:ns:senml sensml"`
 
 	/*
 		Records of the message
@@ -17,7 +20,7 @@ type SenMLRecord struct {
 	/*
 		Used for XML parsing
 	*/
-	XmlName *bool `json:"_,omitempty" xml:"senml"`
+	XMLName xml.Name `json:"-" xml:"senml"`
 
 	/*
 		This is a string that is prepended to the names found in the entries.
@@ -95,10 +98,10 @@ type SenMLRecord struct {
 	Time *float64 `json:"t,omitempty" xml:"t,attr,omitempty"`
 
 	/*
-		 	Period of time in seconds that represents the maximum
-			time before this sensor will provide an updated reading for a
-			measurement.  Optional.  This can be used to detect the failure of
-			sensors or the communications path from the sensor.
+		Period of time in seconds that represents the maximum
+		time before this sensor will provide an updated reading for a
+		measurement.  Optional.  This can be used to detect the failure of
+		sensors or the communications path from the sensor.
 	*/
 	UpdateTime *float64 `json:"ut,omitempty" xml:"ut,attr,omitempty"`
 }

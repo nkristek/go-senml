@@ -31,7 +31,6 @@ func Decode(encodedMessage []byte, format EncodingFormat) (message SenMLMessage,
 	case format == JSON:
 		err = json.Unmarshal(encodedMessage, &message.Records)
 	case format == XML:
-		message.Xmlns = "urn:ietf:params:xml:ns:senml"
 		err = xml.Unmarshal(encodedMessage, &message)
 	}
 	return
@@ -43,7 +42,6 @@ func (message SenMLMessage) Encode(format EncodingFormat) (encodedMessage []byte
 	case format == JSON:
 		encodedMessage, err = json.Marshal(message.Records)
 	case format == XML:
-		message.Xmlns = "urn:ietf:params:xml:ns:senml"
 		encodedMessage, err = xml.Marshal(message)
 	}
 	return
@@ -60,21 +58,8 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 	var baseSum *float64 = nil
 	var baseVersion *int = nil
 
-	if message.XmlName != nil {
-		var resolvedXmlName bool = *message.XmlName
-		resolvedMessage.XmlName = &resolvedXmlName
-	}
-	resolvedMessage.Xmlns = message.Xmlns
-
 	for _, record := range message.Records {
 		var resolvedRecord SenMLRecord = SenMLRecord{}
-
-		// XmlName
-
-		if record.XmlName != nil {
-			var resolvedXmlName bool = *record.XmlName
-			resolvedRecord.XmlName = &resolvedXmlName
-		}
 
 		// Base attributes
 
