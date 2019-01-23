@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"time"
 )
 
@@ -321,7 +322,19 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 		}
 	}
 
-	// TODO: sort the records to be in chronological order
+	// Sort the records in chronological order
+
+	sort.Slice(resolvedMessage.Records, func(i, j int) bool {
+		var first Record = resolvedMessage.Records[i]
+		var second Record = resolvedMessage.Records[j]
+		if first.Time == nil {
+			return true
+		}
+		if second.Time == nil {
+			return false
+		}
+		return *first.Time < *second.Time
+	})
 
 	return
 }
