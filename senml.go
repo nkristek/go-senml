@@ -23,7 +23,7 @@ const (
 	XML
 )
 
-type SenMLMessage struct {
+type Message struct {
 	/*
 		Used for XML parsing
 	*/
@@ -32,10 +32,10 @@ type SenMLMessage struct {
 	/*
 		Records of the message
 	*/
-	Records []SenMLRecord `xml:"senml"`
+	Records []Record `xml:"senml"`
 }
 
-type SenMLRecord struct {
+type Record struct {
 	/*
 		Used for XML parsing
 	*/
@@ -128,7 +128,7 @@ type SenMLRecord struct {
 // Parse the message with the given encoding format.
 // Returns a non-resolved message, you need to resolve it using Resolve() to get
 // base attributes resolution, absolute time, etc.
-func Decode(encodedMessage []byte, format EncodingFormat) (message SenMLMessage, err error) {
+func Decode(encodedMessage []byte, format EncodingFormat) (message Message, err error) {
 	switch {
 	case format == JSON:
 		err = json.Unmarshal(encodedMessage, &message.Records)
@@ -139,7 +139,7 @@ func Decode(encodedMessage []byte, format EncodingFormat) (message SenMLMessage,
 }
 
 // Encodes the message with the given encoding format.
-func (message SenMLMessage) Encode(format EncodingFormat) (encodedMessage []byte, err error) {
+func (message Message) Encode(format EncodingFormat) (encodedMessage []byte, err error) {
 	switch {
 	case format == JSON:
 		encodedMessage, err = json.Marshal(message.Records)
@@ -150,7 +150,7 @@ func (message SenMLMessage) Encode(format EncodingFormat) (encodedMessage []byte
 }
 
 // Resolves the base attributes, calculates absolute time from relative time etc.
-func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) {
+func (message Message) Resolve() (resolvedMessage Message, err error) {
 	var timeNow float64 = float64(time.Now().Unix())
 
 	var baseName *string = nil
@@ -161,7 +161,7 @@ func (message SenMLMessage) Resolve() (resolvedMessage SenMLMessage, err error) 
 	var baseVersion *int = nil
 
 	for _, record := range message.Records {
-		var resolvedRecord SenMLRecord = SenMLRecord{}
+		var resolvedRecord Record = Record{}
 
 		// Base attributes
 

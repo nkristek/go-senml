@@ -93,7 +93,7 @@ func TestJSONParsing(t *testing.T) {
 	}
 }
 
-func compareMessages(t *testing.T, firstMessage senml.SenMLMessage, secondMessage senml.SenMLMessage) {
+func compareMessages(t *testing.T, firstMessage senml.Message, secondMessage senml.Message) {
 	if len(firstMessage.Records) != len(secondMessage.Records) {
 		t.Error("Unequal amount of records")
 		return
