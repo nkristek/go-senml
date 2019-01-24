@@ -1,96 +1,162 @@
-/*
-	Unit tests, run:
-	`go test`
-	to execute them.
-*/
 package senml_test
 
 import (
-	"github.com/nkristek/go-senml"
 	"testing"
+
+	senml "github.com/nkristek/go-senml"
 )
 
-func TestJSONParsing(t *testing.T) {
-	var testData string = `[
-		{"bn":"urn:dev:ow:10e2073a01080063","bt":1.320067464e+09,
-		 "bu":"%RH","v":20},
-		{"u":"lon","v":24.30621},
-		{"u":"lat","v":60.07965},
-		{"t":60,"v":20.3},
-		{"u":"lon","t":60,"v":24.30622},
-		{"u":"lat","t":60,"v":60.07965},
-		{"t":120,"v":20.7},
-		{"u":"lon","t":120,"v":24.30623},
-		{"u":"lat","t":120,"v":60.07966},
-		{"u":"%EL","t":150,"v":98},
-		{"t":180,"v":21.2},
-		{"u":"lon","t":180,"v":24.30628},
-		{"u":"lat","t":180,"v":60.07967}
-	  ]`
+// https://tools.ietf.org/html/rfc8428#section-5.1.3
+const jsonDataUnresolved string = `[
+	{"bn":"urn:dev:ow:10e2073a01080063","bt":1.320067464e+09,
+	 "bu":"%RH","v":20},
+	{"u":"lon","v":24.30621},
+	{"u":"lat","v":60.07965},
+	{"t":60,"v":20.3},
+	{"u":"lon","t":60,"v":24.30622},
+	{"u":"lat","t":60,"v":60.07965},
+	{"t":120,"v":20.7},
+	{"u":"lon","t":120,"v":24.30623},
+	{"u":"lat","t":120,"v":60.07966},
+	{"u":"%EL","t":150,"v":98},
+	{"t":180,"v":21.2},
+	{"u":"lon","t":180,"v":24.30628},
+	{"u":"lat","t":180,"v":60.07967}
+  ]`
 
-	// the same message but with already resolved fields, see https://tools.ietf.org/html/rfc8428#section-5.1.4
-	var resolvedTestData string = `[
-		{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067464e+09,
-		 "v":20},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067464e+09,
-		 "v":24.30621},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"lat","t":1.320067464e+09,
-		 "v":60.07965},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067524e+09,
-		 "v":20.3},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067524e+09,
-		 "v":24.30622},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"lat","t":1.320067524e+09,
-		 "v":60.07965},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067584e+09,
-		 "v":20.7},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067584e+09,
-		 "v":24.30623},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"lat","t":1.320067584e+09,
-		 "v":60.07966},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"%EL","t":1.320067614e+09,
-		 "v":98},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067644e+09,
-		 "v":21.2},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067644e+09,
-		 "v":24.30628},
-		{"n":"urn:dev:ow:10e2073a01080063","u":"lat","t":1.320067644e+09,
-		 "v":60.07967}
-	  ]`
+// https://tools.ietf.org/html/rfc8428#section-5.1.4
+const jsonDataResolved string = `[
+	{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067464e+09,
+	 "v":20},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067464e+09,
+	 "v":24.30621},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"lat","t":1.320067464e+09,
+	 "v":60.07965},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067524e+09,
+	 "v":20.3},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067524e+09,
+	 "v":24.30622},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"lat","t":1.320067524e+09,
+	 "v":60.07965},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067584e+09,
+	 "v":20.7},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067584e+09,
+	 "v":24.30623},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"lat","t":1.320067584e+09,
+	 "v":60.07966},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"%EL","t":1.320067614e+09,
+	 "v":98},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"%RH","t":1.320067644e+09,
+	 "v":21.2},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"lon","t":1.320067644e+09,
+	 "v":24.30628},
+	{"n":"urn:dev:ow:10e2073a01080063","u":"lat","t":1.320067644e+09,
+	 "v":60.07967}
+  ]`
 
-	// Decode
+// https://tools.ietf.org/html/rfc8428#section-7
+const xmlDataUnresolved string = `<sensml xmlns="urn:ietf:params:xml:ns:senml">
+	<senml bn="urn:dev:ow:10e2073a0108006:" bt="1.276020076001e+09"
+	bu="A" bver="5" n="voltage" u="V" v="120.1"></senml>
+	<senml n="current" t="-5" v="1.2"></senml>
+	<senml n="current" t="-4" v="1.3"></senml>
+	<senml n="current" t="-3" v="1.4"></senml>
+	<senml n="current" t="-2" v="1.5"></senml>
+	<senml n="current" t="-1" v="1.6"></senml>
+	<senml n="current" v="1.7"></senml>
+  </sensml>`
 
-	testDataMessage, err := senml.Decode([]byte(testData), senml.JSON)
+func TestDecodeJSON(t *testing.T) {
+	_, err := senml.Decode([]byte(jsonDataUnresolved), senml.JSON)
 	if err != nil {
-		t.Error("parsing initial JSON failed: ", err)
+		t.Error("Decoding JSON failed: ", err)
+		return
+	}
+}
+
+func TestDecodeXML(t *testing.T) {
+	_, err := senml.Decode([]byte(xmlDataUnresolved), senml.XML)
+	if err != nil {
+		t.Error("Decoding XML failed: ", err)
+		return
+	}
+}
+
+func TestDecodeInvalidFormat(t *testing.T) {
+	_, err := senml.Decode(nil, -1)
+	if err == nil {
+		t.Error("Decoding an invalid format should result in an error")
+	}
+}
+
+func TestEncodeJSON(t *testing.T) {
+	message, err := senml.Decode([]byte(jsonDataUnresolved), senml.JSON)
+	if err != nil {
+		t.Error("Decoding JSON failed: ", err)
 		return
 	}
 
-	resolvedTestDataMessage, err := senml.Decode([]byte(resolvedTestData), senml.JSON)
+	encodedMessage, err := message.Encode(senml.JSON)
 	if err != nil {
-		t.Error("parsing initial JSON failed: ", err)
+		t.Error("Encoding message to JSON failed: ", err)
+		return
+	}
+	if encodedMessage == nil || len(encodedMessage) == 0 {
+		t.Error("Encoding to JSON resulted in an empty message")
+	}
+}
+
+func TestEncodeXML(t *testing.T) {
+	message, err := senml.Decode([]byte(xmlDataUnresolved), senml.XML)
+	if err != nil {
+		t.Error("Decoding XML failed: ", err)
 		return
 	}
 
-	// Resolve
-
-	testDataMessageResolved, err := testDataMessage.Resolve()
+	encodedMessage, err := message.Encode(senml.XML)
 	if err != nil {
-		t.Error("resolving message failed: ", err)
+		t.Error("Encoding message to XML failed: ", err)
+		return
+	}
+	if encodedMessage == nil || len(encodedMessage) == 0 {
+		t.Error("Encoding to XML resulted in an empty message")
+	}
+}
+
+func TestEncodeInvalidFormat(t *testing.T) {
+	message, err := senml.Decode([]byte(xmlDataUnresolved), senml.XML)
+	if err != nil {
+		t.Error("Decoding XML failed: ", err)
 		return
 	}
 
-	// Check Resolve
-
-	compareMessages(t, testDataMessageResolved, resolvedTestDataMessage)
-
-	// Encode
-
-	_, err = testDataMessage.Encode(senml.JSON)
-	if err != nil {
-		t.Error("encoding message to JSON failed: ", err)
+	_, err = message.Encode(-1)
+	if err == nil {
+		t.Error("Encoding message to an invalid format should result in an error")
 		return
 	}
+}
+
+func TestResolveExampleData(t *testing.T) {
+	message, err := senml.Decode([]byte(jsonDataUnresolved), senml.JSON)
+	if err != nil {
+		t.Error("Decoding JSON failed: ", err)
+		return
+	}
+
+	resolvedDataMessage, err := senml.Decode([]byte(jsonDataResolved), senml.JSON)
+	if err != nil {
+		t.Error("Decoding JSON failed: ", err)
+		return
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving message failed: ", err)
+		return
+	}
+
+	compareMessages(t, resolvedMessage, resolvedDataMessage)
 }
 
 func compareMessages(t *testing.T, firstMessage senml.Message, secondMessage senml.Message) {
@@ -176,39 +242,766 @@ func compareMessages(t *testing.T, firstMessage senml.Message, secondMessage sen
 	}
 }
 
-func TestXMLParsing(t *testing.T) {
-	var testData string = `<sensml xmlns="urn:ietf:params:xml:ns:senml">
-	<senml bn="urn:dev:ow:10e2073a0108006:" bt="1.276020076001e+09"
-	bu="A" bver="5" n="voltage" u="V" v="120.1"></senml>
-	<senml n="current" t="-5" v="1.2"></senml>
-	<senml n="current" t="-4" v="1.3"></senml>
-	<senml n="current" t="-3" v="1.4"></senml>
-	<senml n="current" t="-2" v="1.5"></senml>
-	<senml n="current" t="-1" v="1.6"></senml>
-	<senml n="current" v="1.7"></senml>
-  </sensml>`
+func TestResolveUnsupportedSenMLVersion(t *testing.T) {
+	var unsupportedVersion = 11
+	var testName = "test"
+	var testValue float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				BaseVersion: &unsupportedVersion,
+				Name:        &testName,
+				Value:       &testValue,
+			},
+		},
+	}
 
-	message, err := senml.Decode([]byte(testData), senml.XML)
-	if err != nil {
-		t.Error("parsing intial XML failed: ", err)
+	_, err := message.Resolve()
+	if err == nil {
+		t.Error("Resolving an unsupported SenML version should result in an error")
 		return
+	}
+}
+
+func TestResolveBaseVersionIsSetIfLowerThanMaximumSupported(t *testing.T) {
+	var lowerVersion = 5
+	var testName = "test"
+	var testValue float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				BaseVersion: &lowerVersion,
+				Name:        &testName,
+				Value:       &testValue,
+			},
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+			},
+		},
 	}
 
 	resolvedMessage, err := message.Resolve()
 	if err != nil {
-		t.Error("resolving message failed: ", err)
+		t.Error("Resolving an lower SenML version than the maximum supported version failed:", err)
 		return
 	}
 
-	_, err = message.Encode(senml.XML)
+	for _, record := range resolvedMessage.Records {
+		if record.BaseVersion == nil {
+			t.Error("The BaseVersion attribute is not set if the version is lower than the maximum supported version")
+			return
+		}
+		if *record.BaseVersion != 5 {
+			t.Error("The BaseVersion attribute is not set to the BaseVersion in the unresolved message")
+			return
+		}
+	}
+}
+
+func TestResolveRecordsHaveDifferentVersion(t *testing.T) {
+	var version = 5
+	var differentVersion = 6
+	var testName = "test"
+	var testValue float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				BaseVersion: &version,
+				Name:        &testName,
+				Value:       &testValue,
+			},
+			senml.Record{
+				BaseVersion: &differentVersion,
+				Name:        &testName,
+				Value:       &testValue,
+			},
+		},
+	}
+
+	_, err := message.Resolve()
+	if err == nil {
+		t.Error("Resolving a SenML message which contains records with different version should result in an error")
+		return
+	}
+}
+
+func TestResolveNameContainsInvalidSymbols(t *testing.T) {
+	var testName = "test("
+	var testValue float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+			},
+		},
+	}
+
+	_, err := message.Resolve()
+	if err == nil {
+		t.Error("Resolving a record with a name which contains invalid symbols should result in an error")
+		return
+	}
+}
+
+func TestResolveNameStartsWithInvalidSymbols(t *testing.T) {
+	var testName = "-test"
+	var testValue float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+			},
+		},
+	}
+
+	_, err := message.Resolve()
+	if err == nil {
+		t.Error("Resolving a record with a name which starts with an invalid symbol should result in an error")
+		return
+	}
+}
+
+func TestResolveNoName(t *testing.T) {
+	var testValue float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Value: &testValue,
+			},
+		},
+	}
+
+	_, err := message.Resolve()
+	if err == nil {
+		t.Error("Resolving a record with no name should result in an error")
+		return
+	}
+}
+
+func TestResolveNoValue(t *testing.T) {
+	var testName = "test"
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name: &testName,
+			},
+		},
+	}
+
+	_, err := message.Resolve()
+	if err == nil {
+		t.Error("Resolving a record with no value or sum should result in an error")
+		return
+	}
+}
+
+func TestResolveValue(t *testing.T) {
+	var testName = "test"
+	var testValue float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
 	if err != nil {
-		t.Error("encoding message to XML failed: ", err)
+		t.Error("Resolving a record with a value should not result in an error", err)
 		return
 	}
 
-	_, err = resolvedMessage.Encode(senml.XML)
+	if resolvedMessage.Records[0].Value == nil {
+		t.Error("The record in the resolved message has no value")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Value != testValue {
+		t.Error("The value field has a different value than expected")
+		return
+	}
+}
+
+func TestResolveBoolValue(t *testing.T) {
+	var testName = "test"
+	var testBoolValue bool = true
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:      &testName,
+				BoolValue: &testBoolValue,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
 	if err != nil {
-		t.Error("encoding resolved message to XML failed: ", err)
+		t.Error("Resolving a record with a bool value should not result in an error", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].BoolValue == nil {
+		t.Error("The record in the resolved message has no bool value")
+		return
+	}
+
+	if *resolvedMessage.Records[0].BoolValue != testBoolValue {
+		t.Error("The bool value field has a different value than expected")
+		return
+	}
+}
+
+func TestResolveStringValue(t *testing.T) {
+	var testName = "test"
+	var testStringValue string = "value"
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:        &testName,
+				StringValue: &testStringValue,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving a record with a string value should not result in an error", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].StringValue == nil {
+		t.Error("The record in the resolved message has no string value")
+		return
+	}
+
+	if *resolvedMessage.Records[0].StringValue != testStringValue {
+		t.Error("The string value field has a different value than expected")
+		return
+	}
+}
+
+func TestResolveDataValue(t *testing.T) {
+	var testName = "test"
+	var testDataValue string = "data"
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:      &testName,
+				DataValue: &testDataValue,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving a record with a data value should not result in an error", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].DataValue == nil {
+		t.Error("The record in the resolved message has no data value")
+		return
+	}
+
+	if *resolvedMessage.Records[0].DataValue != testDataValue {
+		t.Error("The data value field has a different value than expected")
+		return
+	}
+}
+
+func TestResolveSum(t *testing.T) {
+	var testName = "test"
+	var testSum float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name: &testName,
+				Sum:  &testSum,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving a record with a sum should not result in an error", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].Sum == nil {
+		t.Error("The record in the resolved message has no sum")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Sum != testSum {
+		t.Error("The sum field has a different value than expected")
+		return
+	}
+}
+
+func TestResolveUnit(t *testing.T) {
+	var testName = "test"
+	var testValue float64 = 1
+	var testUnit = "unit"
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+				Unit:  &testUnit,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].Unit == nil {
+		t.Error("The record in the resolved message has no unit")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Unit != testUnit {
+		t.Error("The unit field has a different value than expected")
+		return
+	}
+}
+
+func TestResolveUpdateTime(t *testing.T) {
+	var testName = "test"
+	var testValue float64 = 1
+	var testUpdateTime float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:       &testName,
+				Value:      &testValue,
+				UpdateTime: &testUpdateTime,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].UpdateTime == nil {
+		t.Error("The record in the resolved message has no update time")
+		return
+	}
+
+	if *resolvedMessage.Records[0].UpdateTime != testUpdateTime {
+		t.Error("The update time field has a different value than expected")
+		return
+	}
+}
+
+func TestResolveRelativeToAbsoluteTime(t *testing.T) {
+	var testName = "test"
+	var testValue float64 = 1
+	var testTime float64 = 0
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+				Time:  &testTime,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].Time == nil {
+		t.Error("The record in the resolved message has no time")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Time == 0 {
+		t.Error("The time field was not resolved")
+	}
+}
+
+func TestResolveAbsoluteTime(t *testing.T) {
+	var testName = "test"
+	var testValue float64 = 1
+	var testTime float64 = 2 ^ 28
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+				Time:  &testTime,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].Time == nil {
+		t.Error("The record in the resolved message has no time")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Time != testTime {
+		t.Error("The value of the time field was changed, but the RFC specifies that values of 2^28 or over should not be changed")
+	}
+}
+
+func TestResolveOrderIsChronological(t *testing.T) {
+	var testName = "test"
+	var testName2 = "test2"
+	var testValue float64 = 1
+	var testTime float64 = 1
+	var testTime2 float64 = 2
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				Name:  &testName2,
+				Value: &testValue,
+				Time:  &testTime2,
+			},
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+				Time:  &testTime,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].Name == nil {
+		t.Error("The record in the resolved message has no name")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Name != testName {
+		t.Error("The records are not in chronological order")
+		return
+	}
+
+	if resolvedMessage.Records[1].Name == nil {
+		t.Error("The record in the resolved message has no name")
+		return
+	}
+
+	if *resolvedMessage.Records[1].Name != testName2 {
+		t.Error("The records are not in chronological order")
+		return
+	}
+}
+
+func TestResolveBaseName(t *testing.T) {
+	var testBaseName = "base/"
+	var testName2 = "test2"
+	var testValue float64 = 1
+	var testTime float64 = 1
+	var testTime2 float64 = 2
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				BaseName: &testBaseName,
+				Value:    &testValue,
+				Time:     &testTime,
+			},
+			senml.Record{
+				Name:  &testName2,
+				Value: &testValue,
+				Time:  &testTime2,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].BaseName != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[0].Name == nil {
+		t.Error("The record in the resolved message has no name")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Name != testBaseName {
+		t.Error("The base attribute was not properly concatenated with the field")
+		return
+	}
+
+	if resolvedMessage.Records[1].BaseName != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[1].Name == nil {
+		t.Error("The record in the resolved message has no name")
+		return
+	}
+
+	if *resolvedMessage.Records[1].Name != testBaseName+testName2 {
+		t.Error("The base attribute was not properly concatenated with the field")
+		return
+	}
+}
+
+func TestResolveBaseTime(t *testing.T) {
+	var testBaseTime float64 = 2 ^ 28
+	var testName = "test"
+	var testValue float64 = 1
+	var testTime2 float64 = 1
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				BaseTime: &testBaseTime,
+				Name:     &testName,
+				Value:    &testValue,
+			},
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue,
+				Time:  &testTime2,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].BaseTime != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[0].Time == nil {
+		t.Error("The record in the resolved message has no time")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Time != testBaseTime {
+		t.Error("The base attribute was not properly added to the field")
+		return
+	}
+
+	if resolvedMessage.Records[1].BaseTime != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[1].Time == nil {
+		t.Error("The record in the resolved message has no time")
+		return
+	}
+
+	if *resolvedMessage.Records[1].Time != testBaseTime+testTime2 {
+		t.Error("The base attribute was not properly added to the field")
+		return
+	}
+}
+
+func TestResolveBaseUnit(t *testing.T) {
+	var testBaseUnit = "bu"
+	var testName = "test"
+	var testName2 = "test2"
+	var testValue float64 = 1
+	var testTime float64 = 1
+	var testTime2 float64 = 2
+	var testUnit2 string = "u"
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				BaseUnit: &testBaseUnit,
+				Name:     &testName,
+				Value:    &testValue,
+				Time:     &testTime,
+			},
+			senml.Record{
+				Name:  &testName2,
+				Value: &testValue,
+				Time:  &testTime2,
+				Unit:  &testUnit2,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].BaseUnit != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[0].Unit == nil {
+		t.Error("The record in the resolved message has no unit")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Unit != testBaseUnit {
+		t.Error("The base attribute was not properly set")
+		return
+	}
+
+	if resolvedMessage.Records[1].BaseUnit != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[1].Unit == nil {
+		t.Error("The record in the resolved message has no unit")
+		return
+	}
+
+	if *resolvedMessage.Records[1].Unit != testUnit2 {
+		t.Error("The field was replaced with the base attribute")
+		return
+	}
+}
+
+func TestResolveBaseValue(t *testing.T) {
+	var testBaseValue float64 = 1
+	var testName = "test"
+	var testValue2 float64 = 1
+	var testTime float64 = 1
+	var testTime2 float64 = 2
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				BaseValue: &testBaseValue,
+				Name:      &testName,
+				Time:      &testTime,
+			},
+			senml.Record{
+				Name:  &testName,
+				Value: &testValue2,
+				Time:  &testTime2,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].BaseValue != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[0].Value == nil {
+		t.Error("The record in the resolved message has no value")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Value != testBaseValue {
+		t.Error("The base attribute was not properly added to the field")
+		return
+	}
+
+	if resolvedMessage.Records[1].BaseValue != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[1].Value == nil {
+		t.Error("The record in the resolved message has no value")
+		return
+	}
+
+	if *resolvedMessage.Records[1].Value != testBaseValue+testValue2 {
+		t.Error("The base attribute was not properly added to the field")
+		return
+	}
+}
+
+func TestResolveBaseSum(t *testing.T) {
+	var testBaseSum float64 = 1
+	var testName = "test"
+	var testSum2 float64 = 1
+	var testTime float64 = 1
+	var testTime2 float64 = 2
+	message := senml.Message{
+		Records: []senml.Record{
+			senml.Record{
+				BaseSum: &testBaseSum,
+				Name:    &testName,
+				Time:    &testTime,
+			},
+			senml.Record{
+				Name: &testName,
+				Sum:  &testSum2,
+				Time: &testTime2,
+			},
+		},
+	}
+
+	resolvedMessage, err := message.Resolve()
+	if err != nil {
+		t.Error("Resolving the record failed", err)
+		return
+	}
+
+	if resolvedMessage.Records[0].BaseSum != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[0].Sum == nil {
+		t.Error("The record in the resolved message has no sum")
+		return
+	}
+
+	if *resolvedMessage.Records[0].Sum != testBaseSum {
+		t.Error("The base attribute was not properly added to the field")
+		return
+	}
+
+	if resolvedMessage.Records[1].BaseSum != nil {
+		t.Error("The resolved record has a base attribute set")
+		return
+	}
+
+	if resolvedMessage.Records[1].Sum == nil {
+		t.Error("The record in the resolved message has no sum")
+		return
+	}
+
+	if *resolvedMessage.Records[1].Sum != testBaseSum+testSum2 {
+		t.Error("The base attribute was not properly added to the field")
 		return
 	}
 }

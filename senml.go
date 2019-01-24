@@ -1,6 +1,4 @@
-/*
-	This implements 'RFC8428' (https://tools.ietf.org/rfc/rfc8428.txt)
-*/
+// Package senml provides an implementation of RFC 8428
 package senml
 
 import (
@@ -13,17 +11,20 @@ import (
 	"time"
 )
 
-// Supported version
-const SenMLVersion int = 10
+// SupportedVersion declares the maximum supported version of the SenML format
+const SupportedVersion int = 10
 
-// Supported encoding formats
+// EncodingFormat declares the supported encoding formats of the SenML message
 type EncodingFormat int
 
 const (
+	// JSON will use encoding/json
 	JSON EncodingFormat = iota
+	// XML will use encoding/xml
 	XML
 )
 
+// Message is used to serialize and deserialize a SenML message
 type Message struct {
 	/*
 		Used for XML parsing
@@ -36,6 +37,7 @@ type Message struct {
 	Records []Record `xml:"senml"`
 }
 
+// Record is a single record inside a SenML message
 type Record struct {
 	/*
 		Used for XML parsing
@@ -126,7 +128,7 @@ type Record struct {
 	UpdateTime *float64 `json:"ut,omitempty" xml:"ut,attr,omitempty"`
 }
 
-// Parse the message with the given encoding format.
+// Decode parses the message with the given encoding format.
 // Returns a non-resolved message, you need to resolve it using Resolve() to get
 // base attributes resolution, absolute time, etc.
 func Decode(encodedMessage []byte, format EncodingFormat) (message Message, err error) {
@@ -135,49 +137,53 @@ func Decode(encodedMessage []byte, format EncodingFormat) (message Message, err 
 		err = json.Unmarshal(encodedMessage, &message.Records)
 	case format == XML:
 		err = xml.Unmarshal(encodedMessage, &message)
+	default:
+		err = errors.New("Unsupported encoding format")
+		return
 	}
 	return
 }
 
-// Encodes the message with the given encoding format.
-func (message Message) Encode(format EncodingFormat) (encodedMessage []byte, err error) {
+// Encode encodes the message with the given encoding format.
+func (message Message) Encode(format EncodingFormat) ([]byte, error) {
 	switch {
 	case format == JSON:
-		encodedMessage, err = json.Marshal(message.Records)
+		return json.Marshal(message.Records)
 	case format == XML:
-		encodedMessage, err = xml.Marshal(message)
+		return xml.Marshal(message)
+	default:
+		return nil, errors.New("Unsupported encoding format")
 	}
-	return
 }
 
-// Resolves the base attributes, calculates absolute time from relative time etc.
+// Resolve adds the base attributes to the normal attributes, calculates absolute time from relative time etc.
 func (message Message) Resolve() (resolvedMessage Message, err error) {
-	var timeNow float64 = float64(time.Now().Unix())
+	var timeNow = float64(time.Now().Unix())
 
-	var baseName *string = nil
-	var baseTime *float64 = nil
-	var baseUnit *string = nil
-	var baseValue *float64 = nil
-	var baseSum *float64 = nil
-	var baseVersion *int = nil
+	var baseName *string
+	var baseTime *float64
+	var baseUnit *string
+	var baseValue *float64
+	var baseSum *float64
+	var baseVersion *int
 
 	for _, record := range message.Records {
-		var resolvedRecord Record = Record{}
+		var resolvedRecord = Record{}
 
 		// Base attributes
 
 		if record.BaseVersion != nil {
-			if *record.BaseVersion > SenMLVersion {
-				err = errors.New(fmt.Sprintf("The version of the record is higher than supported. (expected: %v, got: %v)", SenMLVersion, *record.BaseVersion))
+			if *record.BaseVersion > SupportedVersion {
+				err = fmt.Errorf("The version of the record is higher than supported. (expected: %v, got: %v)", SupportedVersion, *record.BaseVersion)
 				return
 			} else if baseVersion == nil {
 				baseVersion = record.BaseVersion
 			} else if *record.BaseVersion != *baseVersion {
-				err = errors.New("The BaseVersion of the records should all be the same.")
+				err = errors.New("The BaseVersion of the records should all be the same")
 				return
 			}
 		} else if baseVersion == nil {
-			var defaultVersion int = SenMLVersion
+			var defaultVersion = SupportedVersion
 			baseVersion = &defaultVersion
 		}
 		if record.BaseName != nil {
@@ -198,7 +204,7 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 
 		// Name
 
-		var resolvedName string = ""
+		var resolvedName string
 		if baseName != nil {
 			resolvedName = *baseName
 		}
@@ -206,17 +212,17 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 			resolvedName += *record.Name
 		}
 		if len(resolvedName) == 0 {
-			err = errors.New("The concatenated name MUST not be empty to uniquely identify and differentiate the sensor from all others.")
+			err = errors.New("The concatenated name MUST not be empty to uniquely identify and differentiate the sensor from all others")
 			return
 		}
 		validNameCharsExp := regexp.MustCompile(`^[a-zA-Z0-9\-\:\.\/\_]*$`)
 		if !validNameCharsExp.MatchString(resolvedName) {
-			err = errors.New("The concatenated name MUST consist only of characters out of the set \"A\" to \"Z\", \"a\" to \"z\", and \"0\" to \"9\", as well as \"-\", \":\", \".\", \"/\", and \"_\".")
+			err = errors.New("The concatenated name MUST consist only of characters out of the set \"A\" to \"Z\", \"a\" to \"z\", and \"0\" to \"9\", as well as \"-\", \":\", \".\", \"/\", and \"_\"")
 			return
 		}
 		validFirstCharacterExp := regexp.MustCompile(`^[a-zA-Z0-9]*$`)
 		if !validFirstCharacterExp.MatchString(resolvedName[:1]) {
-			err = errors.New("The concatenated name MUST start with a character out of the set \"A\" to \"Z\", \"a\" to \"z\", or \"0\" to \"9\".")
+			err = errors.New("The concatenated name MUST start with a character out of the set \"A\" to \"Z\", \"a\" to \"z\", or \"0\" to \"9\"")
 			return
 		}
 		resolvedRecord.Name = &resolvedName
@@ -224,16 +230,16 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 		// Unit
 
 		if record.Unit != nil {
-			var resolvedUnit string = *record.Unit
+			var resolvedUnit = *record.Unit
 			resolvedRecord.Unit = &resolvedUnit
 		} else if baseUnit != nil {
-			var resolvedUnit string = *baseUnit
+			var resolvedUnit = *baseUnit
 			resolvedRecord.Unit = &resolvedUnit
 		}
 
 		// Value
 
-		var resolvedValue float64 = 0
+		var resolvedValue float64
 		if baseValue != nil {
 			resolvedValue = *baseValue
 		}
@@ -247,27 +253,27 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 		// BoolValue
 
 		if record.BoolValue != nil {
-			var resolvedBoolValue bool = *record.BoolValue
+			var resolvedBoolValue = *record.BoolValue
 			resolvedRecord.BoolValue = &resolvedBoolValue
 		}
 
 		// StringValue
 
 		if record.StringValue != nil {
-			var resolvedStringValue string = *record.StringValue
+			var resolvedStringValue = *record.StringValue
 			resolvedRecord.StringValue = &resolvedStringValue
 		}
 
 		// DataValue
 
 		if record.DataValue != nil {
-			var resolvedDataValue string = *record.DataValue
+			var resolvedDataValue = *record.DataValue
 			resolvedRecord.DataValue = &resolvedDataValue
 		}
 
 		// Sum
 
-		var resolvedSum float64 = 0
+		var resolvedSum float64
 		if baseSum != nil {
 			resolvedSum = *baseSum
 		}
@@ -280,7 +286,7 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 
 		// Time
 
-		var resolvedTime float64 = 0
+		var resolvedTime float64
 		if baseTime != nil {
 			resolvedTime = *baseTime
 		}
@@ -289,7 +295,7 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 		}
 		if baseTime != nil || record.Time != nil {
 			if resolvedTime < 2^28 {
-				var absoluteTime float64 = resolvedTime + timeNow
+				var absoluteTime = resolvedTime + timeNow
 				resolvedRecord.Time = &absoluteTime
 			} else {
 				resolvedRecord.Time = &resolvedTime
@@ -299,14 +305,14 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 		// UpdateTime
 
 		if record.UpdateTime != nil {
-			var resolvedUpdateTime float64 = *record.UpdateTime
+			var resolvedUpdateTime = *record.UpdateTime
 			resolvedRecord.UpdateTime = &resolvedUpdateTime
 		}
 
 		// Check if a value or sum is set
 
 		if resolvedRecord.Value == nil && resolvedRecord.StringValue == nil && resolvedRecord.BoolValue == nil && resolvedRecord.DataValue == nil && resolvedRecord.Sum == nil {
-			err = errors.New("The record has no Value, StringValue, BoolValue, DataValue or Sum.")
+			err = errors.New("The record has no Value, StringValue, BoolValue, DataValue or Sum")
 			return
 		}
 
@@ -315,23 +321,22 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 
 	// Set BaseVersion if necessary
 
-	if baseVersion != nil && *baseVersion != SenMLVersion {
-		for _, record := range resolvedMessage.Records {
-			var resolvedVersion int = *baseVersion
-			record.BaseVersion = &resolvedVersion
+	if baseVersion != nil && *baseVersion < SupportedVersion {
+		for i := 0; i < len(resolvedMessage.Records); i++ {
+			var resolvedVersion = *baseVersion
+			resolvedMessage.Records[i].BaseVersion = &resolvedVersion
 		}
 	}
 
 	// Sort the records in chronological order
 
-	sort.Slice(resolvedMessage.Records, func(i, j int) bool {
-		var first Record = resolvedMessage.Records[i]
-		var second Record = resolvedMessage.Records[j]
-		if first.Time == nil {
-			return true
-		}
+	sort.SliceStable(resolvedMessage.Records, func(i, j int) bool {
+		var first, second = resolvedMessage.Records[i], resolvedMessage.Records[j]
 		if second.Time == nil {
 			return false
+		}
+		if first.Time == nil {
+			return true
 		}
 		return *first.Time < *second.Time
 	})
