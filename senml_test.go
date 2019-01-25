@@ -244,14 +244,14 @@ func compareMessages(t *testing.T, firstMessage senml.Message, secondMessage sen
 
 func TestResolveUnsupportedSenMLVersion(t *testing.T) {
 	var unsupportedVersion = 11
-	var testName = "test"
-	var testValue float64 = 1
+	var name = "test"
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
 				BaseVersion: &unsupportedVersion,
-				Name:        &testName,
-				Value:       &testValue,
+				Name:        &name,
+				Value:       &value,
 			},
 		},
 	}
@@ -265,18 +265,17 @@ func TestResolveUnsupportedSenMLVersion(t *testing.T) {
 
 func TestResolveBaseVersionIsSetIfLowerThanMaximumSupported(t *testing.T) {
 	var lowerVersion = 5
-	var testName = "test"
-	var testValue float64 = 1
+	var name = "test"
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
 				BaseVersion: &lowerVersion,
-				Name:        &testName,
-				Value:       &testValue,
+				BaseName:    &name,
+				Value:       &value,
 			},
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
+				Value: &value,
 			},
 		},
 	}
@@ -292,7 +291,7 @@ func TestResolveBaseVersionIsSetIfLowerThanMaximumSupported(t *testing.T) {
 			t.Error("The BaseVersion attribute is not set if the version is lower than the maximum supported version")
 			return
 		}
-		if *record.BaseVersion != 5 {
+		if *record.BaseVersion != lowerVersion {
 			t.Error("The BaseVersion attribute is not set to the BaseVersion in the unresolved message")
 			return
 		}
@@ -302,19 +301,18 @@ func TestResolveBaseVersionIsSetIfLowerThanMaximumSupported(t *testing.T) {
 func TestResolveRecordsHaveDifferentVersion(t *testing.T) {
 	var version = 5
 	var differentVersion = 6
-	var testName = "test"
-	var testValue float64 = 1
+	var name = "test"
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
 				BaseVersion: &version,
-				Name:        &testName,
-				Value:       &testValue,
+				BaseName:    &name,
+				Value:       &value,
 			},
 			senml.Record{
 				BaseVersion: &differentVersion,
-				Name:        &testName,
-				Value:       &testValue,
+				Value:       &value,
 			},
 		},
 	}
@@ -327,13 +325,13 @@ func TestResolveRecordsHaveDifferentVersion(t *testing.T) {
 }
 
 func TestResolveNameContainsInvalidSymbols(t *testing.T) {
-	var testName = "test("
-	var testValue float64 = 1
+	var name = "test("
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
+				Name:  &name,
+				Value: &value,
 			},
 		},
 	}
@@ -346,13 +344,13 @@ func TestResolveNameContainsInvalidSymbols(t *testing.T) {
 }
 
 func TestResolveNameStartsWithInvalidSymbols(t *testing.T) {
-	var testName = "-test"
-	var testValue float64 = 1
+	var name = "-test"
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
+				Name:  &name,
+				Value: &value,
 			},
 		},
 	}
@@ -365,11 +363,11 @@ func TestResolveNameStartsWithInvalidSymbols(t *testing.T) {
 }
 
 func TestResolveNoName(t *testing.T) {
-	var testValue float64 = 1
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Value: &testValue,
+				Value: &value,
 			},
 		},
 	}
@@ -382,11 +380,11 @@ func TestResolveNoName(t *testing.T) {
 }
 
 func TestResolveNoValue(t *testing.T) {
-	var testName = "test"
+	var name = "test"
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name: &testName,
+				Name: &name,
 			},
 		},
 	}
@@ -399,13 +397,13 @@ func TestResolveNoValue(t *testing.T) {
 }
 
 func TestResolveValue(t *testing.T) {
-	var testName = "test"
-	var testValue float64 = 1
+	var name = "test"
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
+				Name:  &name,
+				Value: &value,
 			},
 		},
 	}
@@ -421,20 +419,20 @@ func TestResolveValue(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Value != testValue {
+	if *resolvedMessage.Records[0].Value != value {
 		t.Error("The value field has a different value than expected")
 		return
 	}
 }
 
 func TestResolveBoolValue(t *testing.T) {
-	var testName = "test"
-	var testBoolValue bool = true
+	var name = "test"
+	var boolValue bool = true
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:      &testName,
-				BoolValue: &testBoolValue,
+				Name:      &name,
+				BoolValue: &boolValue,
 			},
 		},
 	}
@@ -450,20 +448,20 @@ func TestResolveBoolValue(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].BoolValue != testBoolValue {
+	if *resolvedMessage.Records[0].BoolValue != boolValue {
 		t.Error("The bool value field has a different value than expected")
 		return
 	}
 }
 
 func TestResolveStringValue(t *testing.T) {
-	var testName = "test"
-	var testStringValue string = "value"
+	var name = "test"
+	var stringValue string = "value"
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:        &testName,
-				StringValue: &testStringValue,
+				Name:        &name,
+				StringValue: &stringValue,
 			},
 		},
 	}
@@ -479,20 +477,20 @@ func TestResolveStringValue(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].StringValue != testStringValue {
+	if *resolvedMessage.Records[0].StringValue != stringValue {
 		t.Error("The string value field has a different value than expected")
 		return
 	}
 }
 
 func TestResolveDataValue(t *testing.T) {
-	var testName = "test"
-	var testDataValue string = "data"
+	var name = "test"
+	var dataValue string = "data"
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:      &testName,
-				DataValue: &testDataValue,
+				Name:      &name,
+				DataValue: &dataValue,
 			},
 		},
 	}
@@ -508,20 +506,20 @@ func TestResolveDataValue(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].DataValue != testDataValue {
+	if *resolvedMessage.Records[0].DataValue != dataValue {
 		t.Error("The data value field has a different value than expected")
 		return
 	}
 }
 
 func TestResolveSum(t *testing.T) {
-	var testName = "test"
-	var testSum float64 = 1
+	var name = "test"
+	var sum float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name: &testName,
-				Sum:  &testSum,
+				Name: &name,
+				Sum:  &sum,
 			},
 		},
 	}
@@ -537,22 +535,22 @@ func TestResolveSum(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Sum != testSum {
+	if *resolvedMessage.Records[0].Sum != sum {
 		t.Error("The sum field has a different value than expected")
 		return
 	}
 }
 
 func TestResolveUnit(t *testing.T) {
-	var testName = "test"
-	var testValue float64 = 1
-	var testUnit = "unit"
+	var name = "test"
+	var value float64 = 1
+	var unit = "unit"
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
-				Unit:  &testUnit,
+				Name:  &name,
+				Value: &value,
+				Unit:  &unit,
 			},
 		},
 	}
@@ -568,22 +566,22 @@ func TestResolveUnit(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Unit != testUnit {
+	if *resolvedMessage.Records[0].Unit != unit {
 		t.Error("The unit field has a different value than expected")
 		return
 	}
 }
 
 func TestResolveUpdateTime(t *testing.T) {
-	var testName = "test"
-	var testValue float64 = 1
-	var testUpdateTime float64 = 1
+	var name = "test"
+	var value float64 = 1
+	var updateTime float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:       &testName,
-				Value:      &testValue,
-				UpdateTime: &testUpdateTime,
+				Name:       &name,
+				Value:      &value,
+				UpdateTime: &updateTime,
 			},
 		},
 	}
@@ -599,22 +597,22 @@ func TestResolveUpdateTime(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].UpdateTime != testUpdateTime {
+	if *resolvedMessage.Records[0].UpdateTime != updateTime {
 		t.Error("The update time field has a different value than expected")
 		return
 	}
 }
 
 func TestResolveRelativeToAbsoluteTime(t *testing.T) {
-	var testName = "test"
-	var testValue float64 = 1
-	var testTime float64 = 0
+	var name = "test"
+	var value float64 = 1
+	var time float64 = 2
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
-				Time:  &testTime,
+				Name:  &name,
+				Value: &value,
+				Time:  &time,
 			},
 		},
 	}
@@ -630,21 +628,21 @@ func TestResolveRelativeToAbsoluteTime(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Time == 0 {
+	if *resolvedMessage.Records[0].Time == time {
 		t.Error("The time field was not resolved")
 	}
 }
 
 func TestResolveAbsoluteTime(t *testing.T) {
-	var testName = "test"
-	var testValue float64 = 1
-	var testTime float64 = 2 ^ 28
+	var name = "test"
+	var value float64 = 1
+	var time float64 = 2 ^ 28
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
-				Time:  &testTime,
+				Name:  &name,
+				Value: &value,
+				Time:  &time,
 			},
 		},
 	}
@@ -660,28 +658,35 @@ func TestResolveAbsoluteTime(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Time != testTime {
+	if *resolvedMessage.Records[0].Time != time {
 		t.Error("The value of the time field was changed, but the RFC specifies that values of 2^28 or over should not be changed")
 	}
 }
 
 func TestResolveOrderIsChronological(t *testing.T) {
-	var testName = "test"
-	var testName2 = "test2"
-	var testValue float64 = 1
-	var testTime float64 = 1
-	var testTime2 float64 = 2
+	var baseName = "test"
+	var value float64 = 1
+	var value2 float64 = 2
+	var value3 float64 = 3
+	var value4 float64 = 4
+	var time3 float64 = 3
+	var time4 float64 = 4
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				Name:  &testName2,
-				Value: &testValue,
-				Time:  &testTime2,
+				BaseName: &baseName,
+				Value:    &value4,
+				Time:     &time4,
 			},
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
-				Time:  &testTime,
+				Value: &value,
+			},
+			senml.Record{
+				Value: &value2,
+			},
+			senml.Record{
+				Value: &value3,
+				Time:  &time3,
 			},
 		},
 	}
@@ -692,44 +697,60 @@ func TestResolveOrderIsChronological(t *testing.T) {
 		return
 	}
 
-	if resolvedMessage.Records[0].Name == nil {
-		t.Error("The record in the resolved message has no name")
+	if resolvedMessage.Records[0].Value == nil {
+		t.Error("The record in the resolved message has no value")
 		return
 	}
 
-	if *resolvedMessage.Records[0].Name != testName {
+	if *resolvedMessage.Records[0].Value != value {
 		t.Error("The records are not in chronological order")
 		return
 	}
 
-	if resolvedMessage.Records[1].Name == nil {
-		t.Error("The record in the resolved message has no name")
+	if resolvedMessage.Records[1].Value == nil {
+		t.Error("The record in the resolved message has no value")
 		return
 	}
 
-	if *resolvedMessage.Records[1].Name != testName2 {
+	if *resolvedMessage.Records[1].Value != value2 {
+		t.Error("The records are not in chronological order")
+		return
+	}
+
+	if resolvedMessage.Records[2].Value == nil {
+		t.Error("The record in the resolved message has no value")
+		return
+	}
+
+	if *resolvedMessage.Records[2].Value != value3 {
+		t.Error("The records are not in chronological order")
+		return
+	}
+
+	if resolvedMessage.Records[3].Value == nil {
+		t.Error("The record in the resolved message has no value")
+		return
+	}
+
+	if *resolvedMessage.Records[3].Value != value4 {
 		t.Error("The records are not in chronological order")
 		return
 	}
 }
 
 func TestResolveBaseName(t *testing.T) {
-	var testBaseName = "base/"
-	var testName2 = "test2"
-	var testValue float64 = 1
-	var testTime float64 = 1
-	var testTime2 float64 = 2
+	var baseName = "base/"
+	var name = "test"
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				BaseName: &testBaseName,
-				Value:    &testValue,
-				Time:     &testTime,
+				BaseName: &baseName,
+				Value:    &value,
 			},
 			senml.Record{
-				Name:  &testName2,
-				Value: &testValue,
-				Time:  &testTime2,
+				Name:  &name,
+				Value: &value,
 			},
 		},
 	}
@@ -750,7 +771,7 @@ func TestResolveBaseName(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Name != testBaseName {
+	if *resolvedMessage.Records[0].Name != baseName {
 		t.Error("The base attribute was not properly concatenated with the field")
 		return
 	}
@@ -765,28 +786,26 @@ func TestResolveBaseName(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[1].Name != testBaseName+testName2 {
+	if *resolvedMessage.Records[1].Name != baseName+name {
 		t.Error("The base attribute was not properly concatenated with the field")
 		return
 	}
 }
 
 func TestResolveBaseTime(t *testing.T) {
-	var testBaseTime float64 = 2 ^ 28
-	var testName = "test"
-	var testValue float64 = 1
-	var testTime2 float64 = 1
+	var baseTime float64 = 2 ^ 28
+	var baseName = "test"
+	var baseValue float64 = 1
+	var time float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				BaseTime: &testBaseTime,
-				Name:     &testName,
-				Value:    &testValue,
+				BaseTime:  &baseTime,
+				BaseName:  &baseName,
+				BaseValue: &baseValue,
 			},
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue,
-				Time:  &testTime2,
+				Time: &time,
 			},
 		},
 	}
@@ -807,7 +826,7 @@ func TestResolveBaseTime(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Time != testBaseTime {
+	if *resolvedMessage.Records[0].Time != baseTime {
 		t.Error("The base attribute was not properly added to the field")
 		return
 	}
@@ -822,33 +841,26 @@ func TestResolveBaseTime(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[1].Time != testBaseTime+testTime2 {
+	if *resolvedMessage.Records[1].Time != baseTime+time {
 		t.Error("The base attribute was not properly added to the field")
 		return
 	}
 }
 
 func TestResolveBaseUnit(t *testing.T) {
-	var testBaseUnit = "bu"
-	var testName = "test"
-	var testName2 = "test2"
-	var testValue float64 = 1
-	var testTime float64 = 1
-	var testTime2 float64 = 2
-	var testUnit2 string = "u"
+	var baseUnit = "bu"
+	var baseName = "test"
+	var baseValue float64 = 1
+	var unit string = "u"
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				BaseUnit: &testBaseUnit,
-				Name:     &testName,
-				Value:    &testValue,
-				Time:     &testTime,
+				BaseUnit:  &baseUnit,
+				BaseName:  &baseName,
+				BaseValue: &baseValue,
 			},
 			senml.Record{
-				Name:  &testName2,
-				Value: &testValue,
-				Time:  &testTime2,
-				Unit:  &testUnit2,
+				Unit: &unit,
 			},
 		},
 	}
@@ -869,7 +881,7 @@ func TestResolveBaseUnit(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Unit != testBaseUnit {
+	if *resolvedMessage.Records[0].Unit != baseUnit {
 		t.Error("The base attribute was not properly set")
 		return
 	}
@@ -884,29 +896,24 @@ func TestResolveBaseUnit(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[1].Unit != testUnit2 {
+	if *resolvedMessage.Records[1].Unit != unit {
 		t.Error("The field was replaced with the base attribute")
 		return
 	}
 }
 
 func TestResolveBaseValue(t *testing.T) {
-	var testBaseValue float64 = 1
-	var testName = "test"
-	var testValue2 float64 = 1
-	var testTime float64 = 1
-	var testTime2 float64 = 2
+	var baseValue float64 = 1
+	var baseName = "test"
+	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				BaseValue: &testBaseValue,
-				Name:      &testName,
-				Time:      &testTime,
+				BaseValue: &baseValue,
+				BaseName:  &baseName,
 			},
 			senml.Record{
-				Name:  &testName,
-				Value: &testValue2,
-				Time:  &testTime2,
+				Value: &value,
 			},
 		},
 	}
@@ -927,7 +934,7 @@ func TestResolveBaseValue(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Value != testBaseValue {
+	if *resolvedMessage.Records[0].Value != baseValue {
 		t.Error("The base attribute was not properly added to the field")
 		return
 	}
@@ -942,29 +949,24 @@ func TestResolveBaseValue(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[1].Value != testBaseValue+testValue2 {
+	if *resolvedMessage.Records[1].Value != baseValue+value {
 		t.Error("The base attribute was not properly added to the field")
 		return
 	}
 }
 
 func TestResolveBaseSum(t *testing.T) {
-	var testBaseSum float64 = 1
-	var testName = "test"
-	var testSum2 float64 = 1
-	var testTime float64 = 1
-	var testTime2 float64 = 2
+	var baseSum float64 = 1
+	var baseName = "test"
+	var sum float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
 			senml.Record{
-				BaseSum: &testBaseSum,
-				Name:    &testName,
-				Time:    &testTime,
+				BaseSum:  &baseSum,
+				BaseName: &baseName,
 			},
 			senml.Record{
-				Name: &testName,
-				Sum:  &testSum2,
-				Time: &testTime2,
+				Sum: &sum,
 			},
 		},
 	}
@@ -985,7 +987,7 @@ func TestResolveBaseSum(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[0].Sum != testBaseSum {
+	if *resolvedMessage.Records[0].Sum != baseSum {
 		t.Error("The base attribute was not properly added to the field")
 		return
 	}
@@ -1000,7 +1002,7 @@ func TestResolveBaseSum(t *testing.T) {
 		return
 	}
 
-	if *resolvedMessage.Records[1].Sum != testBaseSum+testSum2 {
+	if *resolvedMessage.Records[1].Sum != baseSum+sum {
 		t.Error("The base attribute was not properly added to the field")
 		return
 	}
