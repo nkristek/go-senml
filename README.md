@@ -6,7 +6,7 @@
 
 A go library to parse SenML records. It currently supports JSON and XML.
 
-This library implements [RFC 8428](https://tools.ietf.org/rfc/rfc8428.txt).
+This library implements [RFC 8428](https://tools.ietf.org/rfc/rfc8428.txt) (SenML version 10).
 
 ## Install
 ```sh
