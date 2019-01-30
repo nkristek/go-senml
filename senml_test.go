@@ -248,7 +248,7 @@ func TestResolveUnsupportedSenMLVersion(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseVersion: &unsupportedVersion,
 				Name:        &name,
 				Value:       &value,
@@ -269,12 +269,12 @@ func TestResolveBaseVersionIsSetIfLowerThanMaximumSupported(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseVersion: &lowerVersion,
 				BaseName:    &name,
 				Value:       &value,
 			},
-			senml.Record{
+			{
 				Value: &value,
 			},
 		},
@@ -305,12 +305,12 @@ func TestResolveRecordsHaveDifferentVersion(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseVersion: &version,
 				BaseName:    &name,
 				Value:       &value,
 			},
-			senml.Record{
+			{
 				BaseVersion: &differentVersion,
 				Value:       &value,
 			},
@@ -329,7 +329,7 @@ func TestResolveNameContainsInvalidSymbols(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:  &name,
 				Value: &value,
 			},
@@ -348,7 +348,7 @@ func TestResolveNameStartsWithInvalidSymbols(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:  &name,
 				Value: &value,
 			},
@@ -366,7 +366,7 @@ func TestResolveNoName(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Value: &value,
 			},
 		},
@@ -383,7 +383,7 @@ func TestResolveNoValue(t *testing.T) {
 	var name = "test"
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name: &name,
 			},
 		},
@@ -401,7 +401,7 @@ func TestResolveValue(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:  &name,
 				Value: &value,
 			},
@@ -430,7 +430,7 @@ func TestResolveBoolValue(t *testing.T) {
 	var boolValue bool = true
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:      &name,
 				BoolValue: &boolValue,
 			},
@@ -459,7 +459,7 @@ func TestResolveStringValue(t *testing.T) {
 	var stringValue string = "value"
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:        &name,
 				StringValue: &stringValue,
 			},
@@ -488,7 +488,7 @@ func TestResolveDataValue(t *testing.T) {
 	var dataValue string = "data"
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:      &name,
 				DataValue: &dataValue,
 			},
@@ -517,7 +517,7 @@ func TestResolveSum(t *testing.T) {
 	var sum float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name: &name,
 				Sum:  &sum,
 			},
@@ -547,7 +547,7 @@ func TestResolveUnit(t *testing.T) {
 	var unit = "unit"
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:  &name,
 				Value: &value,
 				Unit:  &unit,
@@ -578,7 +578,7 @@ func TestResolveUpdateTime(t *testing.T) {
 	var updateTime float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:       &name,
 				Value:      &value,
 				UpdateTime: &updateTime,
@@ -609,7 +609,7 @@ func TestResolveRelativeToAbsoluteTime(t *testing.T) {
 	var time float64 = 2
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:  &name,
 				Value: &value,
 				Time:  &time,
@@ -639,7 +639,7 @@ func TestResolveAbsoluteTime(t *testing.T) {
 	var time float64 = 2 ^ 28
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				Name:  &name,
 				Value: &value,
 				Time:  &time,
@@ -673,18 +673,18 @@ func TestResolveOrderIsChronological(t *testing.T) {
 	var time4 float64 = 4
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseName: &baseName,
 				Value:    &value4,
 				Time:     &time4,
 			},
-			senml.Record{
+			{
 				Value: &value,
 			},
-			senml.Record{
+			{
 				Value: &value2,
 			},
-			senml.Record{
+			{
 				Value: &value3,
 				Time:  &time3,
 			},
@@ -744,11 +744,11 @@ func TestResolveBaseName(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseName: &baseName,
 				Value:    &value,
 			},
-			senml.Record{
+			{
 				Name:  &name,
 				Value: &value,
 			},
@@ -799,12 +799,12 @@ func TestResolveBaseTime(t *testing.T) {
 	var time float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseTime:  &baseTime,
 				BaseName:  &baseName,
 				BaseValue: &baseValue,
 			},
-			senml.Record{
+			{
 				Time: &time,
 			},
 		},
@@ -854,12 +854,12 @@ func TestResolveBaseUnit(t *testing.T) {
 	var unit string = "u"
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseUnit:  &baseUnit,
 				BaseName:  &baseName,
 				BaseValue: &baseValue,
 			},
-			senml.Record{
+			{
 				Unit: &unit,
 			},
 		},
@@ -908,11 +908,11 @@ func TestResolveBaseValue(t *testing.T) {
 	var value float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseValue: &baseValue,
 				BaseName:  &baseName,
 			},
-			senml.Record{
+			{
 				Value: &value,
 			},
 		},
@@ -961,11 +961,11 @@ func TestResolveBaseSum(t *testing.T) {
 	var sum float64 = 1
 	message := senml.Message{
 		Records: []senml.Record{
-			senml.Record{
+			{
 				BaseSum:  &baseSum,
 				BaseName: &baseName,
 			},
-			senml.Record{
+			{
 				Sum: &sum,
 			},
 		},

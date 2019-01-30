@@ -170,8 +170,6 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 	for _, record := range message.Records {
 		var resolvedRecord = Record{}
 
-		// Base attributes
-
 		if record.BaseVersion != nil {
 			if *record.BaseVersion > SupportedVersion {
 				err = fmt.Errorf("The version of the record is higher than supported. (expected: %v, got: %v)", SupportedVersion, *record.BaseVersion)
@@ -202,136 +200,161 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 			baseSum = record.BaseSum
 		}
 
-		// Name
-
-		var resolvedName string
-		if baseName != nil {
-			resolvedName = *baseName
-		}
-		if record.Name != nil {
-			resolvedName += *record.Name
-		}
-		if len(resolvedName) == 0 {
-			err = errors.New("The concatenated name MUST not be empty to uniquely identify and differentiate the sensor from all others")
+		resolvedRecord.Name, err = resolveName(baseName, record.Name)
+		if err != nil {
 			return
 		}
-		validNameCharsExp := regexp.MustCompile(`^[a-zA-Z0-9\-\:\.\/\_]*$`)
-		if !validNameCharsExp.MatchString(resolvedName) {
-			err = errors.New("The concatenated name MUST consist only of characters out of the set \"A\" to \"Z\", \"a\" to \"z\", and \"0\" to \"9\", as well as \"-\", \":\", \".\", \"/\", and \"_\"")
-			return
-		}
-		validFirstCharacterExp := regexp.MustCompile(`^[a-zA-Z0-9]*$`)
-		if !validFirstCharacterExp.MatchString(resolvedName[:1]) {
-			err = errors.New("The concatenated name MUST start with a character out of the set \"A\" to \"Z\", \"a\" to \"z\", or \"0\" to \"9\"")
-			return
-		}
-		resolvedRecord.Name = &resolvedName
+		resolvedRecord.Unit = resolveUnit(baseUnit, record.Unit)
+		resolvedRecord.Value = resolveValue(baseValue, record.Value)
+		resolvedRecord.BoolValue = resolveBoolValue(record.BoolValue)
+		resolvedRecord.StringValue = resolveStringValue(record.StringValue)
+		resolvedRecord.DataValue = resolveDataValue(record.DataValue)
+		resolvedRecord.Sum = resolveSum(baseSum, record.Sum)
+		resolvedRecord.Time = resolveTime(baseTime, record.Time, timeNow)
+		resolvedRecord.UpdateTime = resolveUpdateTime(record.UpdateTime)
 
-		// Unit
-
-		if record.Unit != nil {
-			var resolvedUnit = *record.Unit
-			resolvedRecord.Unit = &resolvedUnit
-		} else if baseUnit != nil {
-			var resolvedUnit = *baseUnit
-			resolvedRecord.Unit = &resolvedUnit
-		}
-
-		// Value
-
-		var resolvedValue float64
-		if baseValue != nil {
-			resolvedValue = *baseValue
-		}
-		if record.Value != nil {
-			resolvedValue += *record.Value
-		}
-		if baseValue != nil || record.Value != nil {
-			resolvedRecord.Value = &resolvedValue
-		}
-
-		// BoolValue
-
-		if record.BoolValue != nil {
-			var resolvedBoolValue = *record.BoolValue
-			resolvedRecord.BoolValue = &resolvedBoolValue
-		}
-
-		// StringValue
-
-		if record.StringValue != nil {
-			var resolvedStringValue = *record.StringValue
-			resolvedRecord.StringValue = &resolvedStringValue
-		}
-
-		// DataValue
-
-		if record.DataValue != nil {
-			var resolvedDataValue = *record.DataValue
-			resolvedRecord.DataValue = &resolvedDataValue
-		}
-
-		// Sum
-
-		var resolvedSum float64
-		if baseSum != nil {
-			resolvedSum = *baseSum
-		}
-		if record.Sum != nil {
-			resolvedSum += *record.Sum
-		}
-		if baseSum != nil || record.Sum != nil {
-			resolvedRecord.Sum = &resolvedSum
-		}
-
-		// Time
-
-		var resolvedTime float64
-		if baseTime != nil {
-			resolvedTime = *baseTime
-		}
-		if record.Time != nil {
-			resolvedTime += *record.Time
-		}
-		if baseTime != nil || record.Time != nil {
-			if resolvedTime < 2^28 {
-				var absoluteTime = resolvedTime + timeNow
-				resolvedRecord.Time = &absoluteTime
-			} else {
-				resolvedRecord.Time = &resolvedTime
-			}
-		}
-
-		// UpdateTime
-
-		if record.UpdateTime != nil {
-			var resolvedUpdateTime = *record.UpdateTime
-			resolvedRecord.UpdateTime = &resolvedUpdateTime
-		}
-
-		// Check if a value or sum is set
-
-		if resolvedRecord.Value == nil && resolvedRecord.StringValue == nil && resolvedRecord.BoolValue == nil && resolvedRecord.DataValue == nil && resolvedRecord.Sum == nil {
-			err = errors.New("The record has no Value, StringValue, BoolValue, DataValue or Sum")
+		err = validateRecordHasValue(resolvedRecord)
+		if err != nil {
 			return
 		}
 
 		resolvedMessage.Records = append(resolvedMessage.Records, resolvedRecord)
 	}
 
-	// Set BaseVersion if necessary
+	setBaseVersionIfNecessary(resolvedMessage, baseVersion)
+	sortRecordsChronologically(resolvedMessage.Records)
+	return
+}
 
+func resolveName(baseName *string, name *string) (*string, error) {
+	var resolvedName string
+	if baseName != nil {
+		resolvedName = *baseName
+	}
+	if name != nil {
+		resolvedName += *name
+	}
+	if len(resolvedName) == 0 {
+		return nil, errors.New("The concatenated name MUST not be empty to uniquely identify and differentiate the sensor from all others")
+	}
+	validNameCharsExp := regexp.MustCompile(`^[a-zA-Z0-9\-\:\.\/\_]*$`)
+	if !validNameCharsExp.MatchString(resolvedName) {
+		return nil, errors.New("The concatenated name MUST consist only of characters out of the set \"A\" to \"Z\", \"a\" to \"z\", and \"0\" to \"9\", as well as \"-\", \":\", \".\", \"/\", and \"_\"")
+	}
+	validFirstCharacterExp := regexp.MustCompile(`^[a-zA-Z0-9]*$`)
+	if !validFirstCharacterExp.MatchString(resolvedName[:1]) {
+		return nil, errors.New("The concatenated name MUST start with a character out of the set \"A\" to \"Z\", \"a\" to \"z\", or \"0\" to \"9\"")
+	}
+	return &resolvedName, nil
+}
+
+func resolveUnit(baseUnit *string, unit *string) *string {
+	if unit != nil {
+		var resolvedUnit = *unit
+		return &resolvedUnit
+	} else if baseUnit != nil {
+		var resolvedUnit = *baseUnit
+		return &resolvedUnit
+	}
+	return nil
+}
+
+func resolveValue(baseValue *float64, value *float64) *float64 {
+	var resolvedValue float64
+	if baseValue != nil {
+		resolvedValue = *baseValue
+	}
+	if value != nil {
+		resolvedValue += *value
+	}
+	if baseValue != nil || value != nil {
+		return &resolvedValue
+	}
+	return nil
+}
+
+func resolveBoolValue(value *bool) *bool {
+	if value != nil {
+		var resolvedBoolValue = *value
+		return &resolvedBoolValue
+	}
+	return nil
+}
+
+func resolveStringValue(value *string) *string {
+	if value != nil {
+		var resolvedStringValue = *value
+		return &resolvedStringValue
+	}
+	return nil
+}
+
+func resolveDataValue(value *string) *string {
+	if value != nil {
+		var resolvedDataValue = *value
+		return &resolvedDataValue
+	}
+	return nil
+}
+
+func resolveSum(baseSum *float64, sum *float64) *float64 {
+	var resolvedSum float64
+	if baseSum != nil {
+		resolvedSum = *baseSum
+	}
+	if sum != nil {
+		resolvedSum += *sum
+	}
+	if baseSum != nil || sum != nil {
+		return &resolvedSum
+	}
+	return nil
+}
+
+func resolveTime(baseTime *float64, time *float64, timeNow float64) *float64 {
+	var resolvedTime float64
+	if baseTime != nil {
+		resolvedTime = *baseTime
+	}
+	if time != nil {
+		resolvedTime += *time
+	}
+	if baseTime != nil || time != nil {
+		if resolvedTime < 2^28 {
+			resolvedTime += timeNow
+		}
+		return &resolvedTime
+	}
+	return nil
+}
+
+func resolveUpdateTime(updateTime *float64) *float64 {
+	if updateTime != nil {
+		var resolvedUpdateTime = *updateTime
+		return &resolvedUpdateTime
+	}
+	return nil
+}
+
+func validateRecordHasValue(record Record) error {
+	if record.Value == nil && record.StringValue == nil && record.BoolValue == nil && record.DataValue == nil && record.Sum == nil {
+		return errors.New("The record has no Value, StringValue, BoolValue, DataValue or Sum")
+	}
+	return nil
+}
+
+func setBaseVersionIfNecessary(message Message, baseVersion *int) {
 	if baseVersion != nil && *baseVersion < SupportedVersion {
-		for i := 0; i < len(resolvedMessage.Records); i++ {
+		for i := range message.Records {
 			var resolvedVersion = *baseVersion
-			resolvedMessage.Records[i].BaseVersion = &resolvedVersion
+			message.Records[i].BaseVersion = &resolvedVersion
 		}
 	}
+}
 
-	// Sort the records in chronological order
-
-	sort.SliceStable(resolvedMessage.Records, func(i, j int) bool {
-		var first, second = resolvedMessage.Records[i], resolvedMessage.Records[j]
+func sortRecordsChronologically(records []Record) {
+	sort.SliceStable(records, func(i, j int) bool {
+		var first, second = records[i], records[j]
 		if second.Time == nil {
 			return false
 		}
@@ -340,6 +363,4 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 		}
 		return *first.Time < *second.Time
 	})
-
-	return
 }
