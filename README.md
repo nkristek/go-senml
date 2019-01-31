@@ -1,5 +1,6 @@
 # go-senml
 
+[![GoDoc](https://godoc.org/github.com/nkristek/go-senml?status.svg)](https://godoc.org/github.com/nkristek/go-senml)
 [![GitHub license](https://img.shields.io/github/license/nkristek/go-senml.svg)](https://github.com/nkristek/go-senml/blob/master/LICENSE)
 [![Build Status](https://travis-ci.com/nkristek/go-senml.svg?branch=master)](https://travis-ci.com/nkristek/go-senml)
 [![Coverage Status](https://coveralls.io/repos/github/nkristek/go-senml/badge.svg?branch=master)](https://coveralls.io/github/nkristek/go-senml?branch=master)
@@ -41,5 +42,3 @@ if err != nil {
 	// process error
 }
 ```
-
-For further documentation, visit [GoDoc](http://godoc.org/github.com/nkristek/go-senml).
