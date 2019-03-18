@@ -4,7 +4,6 @@ package senml
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
@@ -129,31 +128,137 @@ type Record struct {
 	UpdateTime *float64 `json:"ut,omitempty" xml:"ut,attr,omitempty"`
 }
 
-// Decode parses the message with the given encoding format.
+// InvalidNameErrorReason declares the reason the name is invalid
+type InvalidNameErrorReason int
+
+const (
+	// FirstCharacterInvalid means that the first character of the resolved name is not allowed
+	FirstCharacterInvalid InvalidNameErrorReason = iota
+
+	// ContainsInvalidCharacter means that at least one not allowed character was used in the resolved name
+	ContainsInvalidCharacter
+
+	// Empty means that the resolved name is empty
+	Empty
+)
+
+// InvalidNameError is an error which is returned when the resolved name of a record is invalid. This can be due to it having an invalid first character, containing invalid characters or being empty. Please consult the RFC for more information.
+type InvalidNameError struct {
+	// The reason why the resolved name is invalid
+	Reason InvalidNameErrorReason
+}
+
+func (err *InvalidNameError) Error() string {
+	switch err.Reason {
+	case FirstCharacterInvalid:
+		return "The resolved name is invalid. It MUST start with a character out of the set \"A\" to \"Z\", \"a\" to \"z\", or \"0\" to \"9\""
+	case ContainsInvalidCharacter:
+		return "The resolved name is invalid. It MUST consist only of characters out of the set \"A\" to \"Z\", \"a\" to \"z\", and \"0\" to \"9\", as well as \"-\", \":\", \".\", \"/\", and \"_\""
+	case Empty:
+		return "The resolved name is invalid. It MUST not be empty to uniquely identify and differentiate the sensor from all others"
+	default:
+		return "The resolved name is invalid. There is no detailed description for the given reason."
+	}
+}
+
+func newInvalidNameError(reason InvalidNameErrorReason) *InvalidNameError {
+	return &InvalidNameError{
+		Reason: reason,
+	}
+}
+
+// UnsupportedVersionError is an error which is returned when the message has an unsupported SenML version
+type UnsupportedVersionError struct {
+	// The maximum version currently supported by this library
+	SupportedVersion int
+
+	// The version of the given message
+	GivenVersion int
+}
+
+func (err *UnsupportedVersionError) Error() string {
+	return fmt.Sprintf("The version of the message is unsupported. (maximum supported version: %v, got: %v)", err.SupportedVersion, err.GivenVersion)
+}
+
+func newUnsupportedVersionError(givenVersion int) *UnsupportedVersionError {
+	return &UnsupportedVersionError{
+		SupportedVersion: SupportedVersion,
+		GivenVersion:     givenVersion,
+	}
+}
+
+// DifferentVersionError is an error which is returned when at least one record has a different BaseVersion than the others. This is not allowed since all records must have the same version number (RFC 8428 chapter 4.4).
+type DifferentVersionError struct {
+	// The version currently used to parse the records. This could have been set by a preceding record or it defaults to the supported version if no BaseVersion field was set on a preceding record.
+	CurrentVersion int
+
+	// The version of the record which has a different version
+	GivenVersion int
+}
+
+func (err *DifferentVersionError) Error() string {
+	return fmt.Sprintf("The BaseVersion of at least one record differs from the other records. (version used to parse the records: %v, got: %v)", err.CurrentVersion, err.GivenVersion)
+}
+
+func newDifferentVersionError(currentVersion int, givenVersion int) *DifferentVersionError {
+	return &DifferentVersionError{
+		CurrentVersion: currentVersion,
+		GivenVersion:   givenVersion,
+	}
+}
+
+// MissingValueError is an error which is returned when no value is set on the record. At least one of the following fields has to be set on all records: Value, StringValue, BoolValue, DataValue or Sum.
+type MissingValueError struct {
+}
+
+func (err *MissingValueError) Error() string {
+	return "The record has no Value, StringValue, BoolValue, DataValue or Sum field set"
+}
+
+func newMissingValueError() *MissingValueError {
+	return &MissingValueError{}
+}
+
+// UnsupportedFormatError is an error which is returned when an unsupported encoding/decoding format was given.
+type UnsupportedFormatError struct {
+	// The given format for encoding/decoding
+	GivenFormat EncodingFormat
+}
+
+func (err *UnsupportedFormatError) Error() string {
+	return fmt.Sprintf("Unsupported encoding/decoding format: %v", err.GivenFormat)
+}
+
+func newUnsupportedFormatError(format EncodingFormat) *UnsupportedFormatError {
+	return &UnsupportedFormatError{
+		GivenFormat: format,
+	}
+}
+
+// Decode parses the message with the given decoding format.
 // Returns a non-resolved message, you need to resolve it using Resolve() to get
 // base attributes resolution, absolute time, etc.
 func Decode(encodedMessage []byte, format EncodingFormat) (message Message, err error) {
-	switch {
-	case format == JSON:
+	switch format {
+	case JSON:
 		err = json.Unmarshal(encodedMessage, &message.Records)
-	case format == XML:
+	case XML:
 		err = xml.Unmarshal(encodedMessage, &message)
 	default:
-		err = errors.New("Unsupported encoding format")
-		return
+		err = newUnsupportedFormatError(format)
 	}
 	return
 }
 
 // Encode encodes the message with the given encoding format.
 func (message Message) Encode(format EncodingFormat) ([]byte, error) {
-	switch {
-	case format == JSON:
+	switch format {
+	case JSON:
 		return json.Marshal(message.Records)
-	case format == XML:
+	case XML:
 		return xml.Marshal(message)
 	default:
-		return nil, errors.New("Unsupported encoding format")
+		return nil, newUnsupportedFormatError(format)
 	}
 }
 
@@ -173,12 +278,12 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 
 		if record.BaseVersion != nil {
 			if *record.BaseVersion > SupportedVersion {
-				err = fmt.Errorf("The version of the record is higher than supported. (expected: %v, got: %v)", SupportedVersion, *record.BaseVersion)
+				err = newUnsupportedVersionError(*record.BaseVersion)
 				return
 			} else if baseVersion == nil {
 				baseVersion = record.BaseVersion
 			} else if *record.BaseVersion != *baseVersion {
-				err = errors.New("The BaseVersion of the records should all be the same")
+				err = newDifferentVersionError(*baseVersion, *record.BaseVersion)
 				return
 			}
 		} else if baseVersion == nil {
@@ -201,8 +306,10 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 			baseSum = record.BaseSum
 		}
 
-		resolvedRecord.Name, err = resolveName(baseName, record.Name)
-		if err != nil {
+		var resolveNameError *InvalidNameError
+		resolvedRecord.Name, resolveNameError = resolveName(baseName, record.Name)
+		if resolveNameError != nil {
+			err = resolveNameError
 			return
 		}
 		resolvedRecord.Unit = resolveUnit(baseUnit, record.Unit)
@@ -214,8 +321,10 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 		resolvedRecord.Time = resolveTime(baseTime, record.Time, timeNow)
 		resolvedRecord.UpdateTime = resolveUpdateTime(record.UpdateTime)
 
-		err = validateRecordHasValue(resolvedRecord)
-		if err != nil {
+		var resolveValueError *MissingValueError
+		resolveValueError = validateRecordHasValue(resolvedRecord)
+		if resolveValueError != nil {
+			err = resolveValueError
 			return
 		}
 
@@ -227,7 +336,7 @@ func (message Message) Resolve() (resolvedMessage Message, err error) {
 	return
 }
 
-func resolveName(baseName *string, name *string) (*string, error) {
+func resolveName(baseName *string, name *string) (*string, *InvalidNameError) {
 	var resolvedName string
 	if baseName != nil {
 		resolvedName = *baseName
@@ -236,15 +345,15 @@ func resolveName(baseName *string, name *string) (*string, error) {
 		resolvedName += *name
 	}
 	if len(resolvedName) == 0 {
-		return nil, errors.New("The concatenated name MUST not be empty to uniquely identify and differentiate the sensor from all others")
-	}
-	validNameCharsExp := regexp.MustCompile(`^[a-zA-Z0-9\-\:\.\/\_]*$`)
-	if !validNameCharsExp.MatchString(resolvedName) {
-		return nil, errors.New("The concatenated name MUST consist only of characters out of the set \"A\" to \"Z\", \"a\" to \"z\", and \"0\" to \"9\", as well as \"-\", \":\", \".\", \"/\", and \"_\"")
+		return nil, newInvalidNameError(Empty)
 	}
 	validFirstCharacterExp := regexp.MustCompile(`^[a-zA-Z0-9]*$`)
 	if !validFirstCharacterExp.MatchString(resolvedName[:1]) {
-		return nil, errors.New("The concatenated name MUST start with a character out of the set \"A\" to \"Z\", \"a\" to \"z\", or \"0\" to \"9\"")
+		return nil, newInvalidNameError(FirstCharacterInvalid)
+	}
+	validNameCharsExp := regexp.MustCompile(`^[a-zA-Z0-9\-\:\.\/\_]*$`)
+	if !validNameCharsExp.MatchString(resolvedName) {
+		return nil, newInvalidNameError(ContainsInvalidCharacter)
 	}
 	return &resolvedName, nil
 }
@@ -337,9 +446,9 @@ func resolveUpdateTime(updateTime *float64) *float64 {
 	return nil
 }
 
-func validateRecordHasValue(record Record) error {
+func validateRecordHasValue(record Record) *MissingValueError {
 	if record.Value == nil && record.StringValue == nil && record.BoolValue == nil && record.DataValue == nil && record.Sum == nil {
-		return errors.New("The record has no Value, StringValue, BoolValue, DataValue or Sum")
+		return newMissingValueError()
 	}
 	return nil
 }

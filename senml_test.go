@@ -867,3 +867,83 @@ func TestResolveBaseSum(t *testing.T) {
 		return
 	}
 }
+
+func TestInvalidNameErrorFirstCharacterInvalid(t *testing.T) {
+	err := &senml.InvalidNameError{
+		Reason: senml.FirstCharacterInvalid,
+	}
+	message := err.Error()
+	if message == "" {
+		t.Error("The error message is empty.")
+	}
+}
+
+func TestInvalidNameErrorContainsInvalidCharacter(t *testing.T) {
+	err := &senml.InvalidNameError{
+		Reason: senml.ContainsInvalidCharacter,
+	}
+	message := err.Error()
+	if message == "" {
+		t.Error("The error message is empty.")
+	}
+}
+
+func TestInvalidNameErrorEmpty(t *testing.T) {
+	err := &senml.InvalidNameError{
+		Reason: senml.Empty,
+	}
+	message := err.Error()
+	if message == "" {
+		t.Error("The error message is empty.")
+	}
+}
+
+func TestInvalidNameErrorUnknown(t *testing.T) {
+	err := &senml.InvalidNameError{
+		Reason: -1,
+	}
+	message := err.Error()
+	if message == "" {
+		t.Error("The error message is empty.")
+	}
+}
+
+func TestUnsupportedVersionError(t *testing.T) {
+	err := &senml.UnsupportedVersionError{
+		SupportedVersion: 10,
+		GivenVersion:     11,
+	}
+	message := err.Error()
+	if message == "" {
+		t.Error("The error message is empty.")
+	}
+}
+
+func TestDifferentVersionError(t *testing.T) {
+	err := &senml.DifferentVersionError{
+		CurrentVersion: 10,
+		GivenVersion:   11,
+	}
+	message := err.Error()
+	if message == "" {
+		t.Error("The error message is empty.")
+	}
+}
+
+func TestMissingValueError(t *testing.T) {
+	err := &senml.MissingValueError{}
+	message := err.Error()
+	if message == "" {
+		t.Error("The error message is empty.")
+	}
+}
+
+func TestUnsupportedFormatError(t *testing.T) {
+	err := &senml.UnsupportedFormatError{
+		GivenFormat: -1,
+	}
+	message := err.Error()
+	if message == "" {
+		t.Error("The error message is empty.")
+	}
+}

@@ -42,3 +42,47 @@ if err != nil {
 	// process error
 }
 ```
+
+## Error handling
+
+If `Resolve()` returns an error it can have one of the following types:
+
+- `InvalidNameError`
+- `UnsupportedVersionError`
+- `DifferentVersionError`
+- `MissingValueError`
+
+Likewise, the `Encode()` and `Decode()` functions return an error of type `UnsupportedFormatError` if it was called with an unsupported format.
+
+The different error types provide extra values to parse the exact reason in code. If you need to check on the specific reason on why resolving the message has failed, the following `switch` statement should suffice: 
+
+```go
+_, err := message.Resolve()
+if err != nil {
+	switch err.(type) {
+	case *senml.InvalidNameError:
+		// do something
+		// for example:
+		invalidNameError := err.(*senml.InvalidNameError)
+		switch invalidNameError.Reason {
+		case senml.FirstCharacterInvalid:
+			break
+		case senml.ContainsInvalidCharacter:
+			break
+		case senml.Empty:
+			break
+		}
+	case *senml.UnsupportedVersionError:
+		// do something
+		break
+	case *senml.DifferentVersionError:
+		// do something
+		break
+	case *senml.MissingValueError:
+		// do something
+		break
+	default:
+		break
+	}
+}
+```
