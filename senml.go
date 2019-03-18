@@ -11,16 +11,17 @@ import (
 	"time"
 )
 
-// SupportedVersion declares the maximum supported version of the SenML format
+// SupportedVersion declares the maximum version of the SenML format supported by this library
 const SupportedVersion int = 10
 
 // EncodingFormat declares the supported encoding formats of the SenML message
 type EncodingFormat int
 
 const (
-	// JSON will use encoding/json
+	// JSON will use encoding/json to serialize/deserialize the message
 	JSON EncodingFormat = iota
-	// XML will use encoding/xml
+
+	// XML will use encoding/xml to serialize/deserialize the message
 	XML
 )
 
