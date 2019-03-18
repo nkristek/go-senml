@@ -142,7 +142,7 @@ func TestResolveBaseVersionIsSetIfLowerThanMaximumSupported(t *testing.T) {
 
 	resolvedMessage, err := message.Resolve()
 	if err != nil {
-		t.Error("Resolving an lower SenML version than the maximum supported version failed:", err)
+		t.Error("Resolving a lower SenML version than the maximum supported version failed:", err)
 		return
 	}
 
