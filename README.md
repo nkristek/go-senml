@@ -54,7 +54,7 @@ If `Resolve()` returns an error it can have one of the following types:
 
 Likewise, the `Encode()` and `Decode()` functions return an error of type `UnsupportedFormatError` if it was called with an unsupported format.
 
-The different error types provide extra values to parse the exact reason in code. If you need to check on the specific reason on why resolving the message has failed, the following `switch` statement should suffice: 
+The error types provide extra values to parse the exact reason in code. If you need to check on the specific reason on why resolving the message has failed, the following `switch` statement should suffice: 
 
 ```go
 _, err := message.Resolve()
