@@ -1,9 +1,8 @@
 # go-senml
 
+[![CI Status](https://github.com/nkristek/go-senml/workflows/CI/badge.svg)](https://github.com/nkristek/go-senml/actions)
 [![GoDoc](https://godoc.org/github.com/nkristek/go-senml?status.svg)](https://godoc.org/github.com/nkristek/go-senml)
 [![GitHub license](https://img.shields.io/github/license/nkristek/go-senml.svg)](https://github.com/nkristek/go-senml/blob/master/LICENSE)
-[![Build Status](https://travis-ci.com/nkristek/go-senml.svg?branch=master)](https://travis-ci.com/nkristek/go-senml)
-[![Coverage Status](https://coveralls.io/repos/github/nkristek/go-senml/badge.svg?branch=master)](https://coveralls.io/github/nkristek/go-senml?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nkristek/go-senml)](https://goreportcard.com/report/github.com/nkristek/go-senml)
 
 A go library to parse SenML records. It currently supports JSON and XML.
